@@ -14,36 +14,37 @@ def create_dash_app(flask_app):
     excel_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.xlsx')]
 
     dash_app.layout = html.Div([
-        html.H3("Excelファイルのグラフ表示（Dash）"),
-        dcc.Dropdown(
-            id='file-dropdown',
-            options=[{'label': f, 'value': f} for f in excel_files],
-            placeholder="Excelファイルを選択",
-        ),
+        html.H3("全Excelファイルを結合して表示（Dash）"),
         dcc.Graph(id='excel-graph')
     ])
 
     @dash_app.callback(
         Output('excel-graph', 'figure'),
-        Input('file-dropdown', 'value')
+        Input('excel-graph', 'id')
     )
     def update_graph(file_name):
-        if file_name is None:
-            return {}
+        all_dfs = []
+        
+        for file in excel_files:
+            path = os.path.join(DATA_DIR, file)
+            df = pd.read_excel(path)
 
-        df = pd.read_excel(os.path.join("data", file_name))
+            # 期間を文字列や日付に変換（必要に応じて）
+            df['期間'] = pd.to_datetime(df['期間'])
+            df['期間'] = df['期間'].dt.to_period('M').astype(str)  # 月単位にする場合
+            df = df[df['収入/支出'].isin(['収入','支出'])]
 
-        # 列チェック
-        if '期間' not in df.columns or '収入/支出' not in df.columns or '金額' not in df.columns:
-            return {}
+            # 区分ごとに期間別集計
+            summary = df.groupby(['期間', '収入/支出'])['金額'].sum().reset_index()
+            
+            all_dfs.append(df)
 
-        # 期間を文字列や日付に変換（必要に応じて）
-        df['期間'] = pd.to_datetime(df['期間'])
-        df['期間'] = df['期間'].dt.to_period('M').astype(str)  # 月単位にする場合
-        df = df[df['収入/支出'].isin(['収入','支出'])]
-
-        # 区分ごとに期間別集計
-        summary = df.groupby(['期間', '収入/支出'])['金額'].sum().reset_index()
+        if not all_dfs:
+            return px.bar(title="対象データがありません")
+        
+        combined_df = pd.concat(all_dfs, ignore_index=True)
+        
+        summary = combined_df.groupby(['期間','収入/支出'])['金額'].sum().reset_index()
 
         # グラフ作成
         fig = px.bar(
