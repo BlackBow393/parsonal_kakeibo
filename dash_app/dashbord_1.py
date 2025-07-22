@@ -40,6 +40,7 @@ def create_dash_app(flask_app):
         # 期間を文字列や日付に変換（必要に応じて）
         df['期間'] = pd.to_datetime(df['期間'])
         df['期間'] = df['期間'].dt.to_period('M').astype(str)  # 月単位にする場合
+        df = df[df['収入/支出'].isin(['収入','支出'])]
 
         # 区分ごとに期間別集計
         summary = df.groupby(['期間', '収入/支出'])['金額'].sum().reset_index()
@@ -56,6 +57,9 @@ def create_dash_app(flask_app):
         )
         
         fig.update_layout(
+            xaxis=dict(
+                tickformat='%Y/%m/%d'
+            ),
             yaxis=dict(
                 tickformat=',',
                 tickprefix='￥'
