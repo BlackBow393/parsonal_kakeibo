@@ -7,7 +7,7 @@ def create_dash_app(flask_app):
     dash_app = Dash(
         __name__,
         server=flask_app,
-        url_base_pathname='/dash/',  # DashのURLルート
+        url_base_pathname='/dash/',
     )
 
     DATA_DIR = "data"
@@ -15,59 +15,76 @@ def create_dash_app(flask_app):
 
     dash_app.layout = html.Div([
         html.H3("全Excelファイルを結合して表示（Dash）"),
-        dcc.Graph(id='excel-graph')
+        dcc.Graph(id='excel-graph'),
+        dcc.Graph(id='pie-chart')  # 常時表示する円グラフ
     ])
 
     @dash_app.callback(
         Output('excel-graph', 'figure'),
-        Input('excel-graph', 'id')
+        Output('pie-chart', 'figure'),
+        Input('excel-graph', 'id')  # トリガー用（何かしら必要）
     )
-    def update_graph(file_name):
+    def update_graph(_):
         all_dfs = []
-        
+
         for file in excel_files:
             path = os.path.join(DATA_DIR, file)
             df = pd.read_excel(path)
 
-            # 期間を文字列や日付に変換（必要に応じて）
-            df['期間'] = pd.to_datetime(df['期間'])
-            df['期間'] = df['期間'].dt.to_period('M').astype(str)  # 月単位にする場合
-            df = df[df['収入/支出'].isin(['収入','支出'])]
+            if '期間' not in df.columns or '収入/支出' not in df.columns or '金額' not in df.columns:
+                continue  # 想定外の構成はスキップ
 
-            # 区分ごとに期間別集計
-            summary = df.groupby(['期間', '収入/支出'])['金額'].sum().reset_index()
-            
+            df['期間'] = pd.to_datetime(df['期間'], errors='coerce')
+            df.dropna(subset=['期間'], inplace=True)
+            df['期間'] = df['期間'].dt.to_period('M').astype(str)
+            df = df[df['収入/支出'].isin(['収入', '支出'])]
+
             all_dfs.append(df)
 
         if not all_dfs:
-            return px.bar(title="対象データがありません")
-        
-        combined_df = pd.concat(all_dfs, ignore_index=True)
-        
-        summary = combined_df.groupby(['期間','収入/支出'])['金額'].sum().reset_index()
+            empty_fig = px.bar(title="対象データがありません")
+            return empty_fig, px.pie(title="対象データがありません")
 
-        # グラフ作成
-        fig = px.bar(
-            summary,
+        combined_df = pd.concat(all_dfs, ignore_index=True)
+
+        # 棒グラフ用データ
+        summary_bar = combined_df.groupby(['期間', '収入/支出'])['金額'].sum().reset_index()
+
+        fig_bar = px.bar(
+            summary_bar,
             x='期間',
             y='金額',
             color='収入/支出',
             barmode='group',
-            title=f"{file_name} の期間別収支分類",
+            title="期間別収支分類",
             labels={'金額': '金額（円）', '期間': '期間'}
         )
-        
-        fig.update_layout(
+
+        fig_bar.update_layout(
             xaxis=dict(
                 tickformat='%Y年%m月',
-                rangeslider=dict(visible=True) #スライダーを表示
+                rangeslider=dict(visible=True)
             ),
             yaxis=dict(
                 tickformat=',',
                 tickprefix='￥'
             )
         )
-        
-        return fig
+
+        # 円グラフ用データ（収入だけ）
+        income_df = combined_df[combined_df['収入/支出'] == '収入']
+        if '分類' in income_df.columns:
+            summary_pie = income_df.groupby('分類')['金額'].sum().reset_index()
+            fig_pie = px.pie(
+                summary_pie,
+                names='分類',
+                values='金額',
+                title='収入の分類割合',
+                labels={'金額': '金額（円）'}
+            )
+        else:
+            fig_pie = px.pie(title="対象データがありません")
+
+        return fig_bar, fig_pie
 
     return dash_app
