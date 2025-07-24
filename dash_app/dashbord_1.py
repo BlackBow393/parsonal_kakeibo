@@ -59,7 +59,8 @@ def create_dash_app(flask_app):
         
         fig.update_layout(
             xaxis=dict(
-                tickformat='%Y/%m/%d'
+                tickformat='%Y年%m月',
+                rangeslider=dict(visible=True) #スライダーを表示
             ),
             yaxis=dict(
                 tickformat=',',
