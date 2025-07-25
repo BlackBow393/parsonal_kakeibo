@@ -15,13 +15,15 @@ def create_dash_app(flask_app):
 
     dash_app.layout = html.Div([
         html.H3("全Excelファイルを結合して表示（Dash）"),
-        dcc.Graph(id='excel-graph'),
-        dcc.Graph(id='pie-chart')  # 常時表示する円グラフ
+        dcc.Graph(id='excel-graph'), #棒グラフ
+        dcc.Graph(id='pie-in-chart'),  # 収入の円グラフ
+        dcc.Graph(id='pie-out-chart')  # 収入の円グラフ
     ])
 
     @dash_app.callback(
         Output('excel-graph', 'figure'),
-        Output('pie-chart', 'figure'),
+        Output('pie-in-chart', 'figure'),
+        Output('pie-out-chart', 'figure'),
         Input('excel-graph', 'id')  # トリガー用（何かしら必要）
     )
     def update_graph(_):
@@ -74,17 +76,31 @@ def create_dash_app(flask_app):
         # 円グラフ用データ（収入だけ）
         income_df = combined_df[combined_df['収入/支出'] == '収入']
         if '分類' in income_df.columns:
-            summary_pie = income_df.groupby('分類')['金額'].sum().reset_index()
-            fig_pie = px.pie(
-                summary_pie,
+            summary_pie_in = income_df.groupby('分類')['金額'].sum().reset_index()
+            fig_pie_in = px.pie(
+                summary_pie_in,
                 names='分類',
                 values='金額',
                 title='収入の分類割合',
                 labels={'金額': '金額（円）'}
             )
         else:
-            fig_pie = px.pie(title="対象データがありません")
+            fig_pie_in = px.pie(title="対象データがありません")
+        
+        # 円グラフ用データ（支出だけ）
+        expenses_df = combined_df[combined_df['収入/支出'] == '支出']
+        if '分類' in expenses_df.columns:
+            summary_pie_out = expenses_df.groupby('分類')['金額'].sum().reset_index()
+            fig_pie_out = px.pie(
+                summary_pie_out,
+                names='分類',
+                values='金額',
+                title='支出の分類割合',
+                labels={'金額': '金額（円）'}
+            )
+        else:
+            fig_pie_out = px.pie(title="対象データがありません")
 
-        return fig_bar, fig_pie
+        return fig_bar, fig_pie_in, fig_pie_out
 
     return dash_app
