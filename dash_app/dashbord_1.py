@@ -16,8 +16,10 @@ def create_dash_app(flask_app):
     dash_app.layout = html.Div([
         html.H3("全Excelファイルを結合して表示（Dash）"),
         dcc.Graph(id='excel-graph'), #棒グラフ
-        dcc.Graph(id='pie-in-chart'),  # 収入の円グラフ
-        dcc.Graph(id='pie-out-chart')  # 収入の円グラフ
+        html.Div([
+            dcc.Graph(id='pie-in-chart', style={'width': '50%'}),  # 収入の円グラフ
+            dcc.Graph(id='pie-out-chart', style={'width': '50%'})  # 収入の円グラフ
+        ], style={'display': 'flex'})
     ])
 
     @dash_app.callback(
@@ -76,7 +78,7 @@ def create_dash_app(flask_app):
         # 円グラフ用データ（収入だけ）
         income_df = combined_df[combined_df['収入/支出'] == '収入']
         if '分類' in income_df.columns:
-            summary_pie_in = income_df.groupby('分類')['金額'].sum().reset_index()
+            summary_pie_in = income_df.groupby('分類')['金額'].sum().reset_index()            
             fig_pie_in = px.pie(
                 summary_pie_in,
                 names='分類',
