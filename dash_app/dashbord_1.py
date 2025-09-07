@@ -130,23 +130,50 @@ def create_dash_app(flask_app):
         # 円グラフ
         income_df = combined_df[combined_df['収入/支出'] == '収入']
         if '分類' in income_df.columns:
+            grouped_in = income_df.groupby('分類')['金額'].sum().reset_index()
+
+            # 「その他」以外を降順にソート
+            non_other = grouped_in[grouped_in['分類'] != 'その他'].sort_values('金額', ascending=False)
+            other = grouped_in[grouped_in['分類'] == 'その他']
+
+            # ソート後に「その他」を最後に追加
+            grouped_in = pd.concat([non_other, other])
+
+            # 順序をカテゴリ型にして固定
+            categories = grouped_in['分類'].tolist()
+            grouped_in['分類'] = pd.Categorical(grouped_in['分類'], categories=categories, ordered=True)
+
             fig_pie_in = px.pie(
-                income_df.groupby('分類')['金額'].sum().reset_index(),
+                grouped_in,
                 names='分類',
                 values='金額',
-                title='収入の分類割合'
+                title='収入の分類割合',
+                category_orders={'分類': categories}
             )
+            # 時計回り
+            fig_pie_in.update_traces(sort=False, direction='clockwise')
         else:
             fig_pie_in = px.pie(title="対象データがありません")
 
         expenses_df = combined_df[combined_df['収入/支出'] == '支出']
         if '分類' in expenses_df.columns:
+            grouped_out = expenses_df.groupby('分類')['金額'].sum().reset_index()
+
+            non_other = grouped_out[grouped_out['分類'] != 'その他'].sort_values('金額', ascending=False)
+            other = grouped_out[grouped_out['分類'] == 'その他']
+            grouped_out = pd.concat([non_other, other])
+
+            categories = grouped_out['分類'].tolist()
+            grouped_out['分類'] = pd.Categorical(grouped_out['分類'], categories=categories, ordered=True)
+
             fig_pie_out = px.pie(
-                expenses_df.groupby('分類')['金額'].sum().reset_index(),
+                grouped_out,
                 names='分類',
                 values='金額',
-                title='支出の分類割合'
+                title='支出の分類割合',
+                category_orders={'分類': categories}
             )
+            fig_pie_out.update_traces(sort=False, direction='clockwise')
         else:
             fig_pie_out = px.pie(title="対象データがありません")
 
