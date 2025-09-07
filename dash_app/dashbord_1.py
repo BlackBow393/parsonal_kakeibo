@@ -30,8 +30,9 @@ def create_dash_app(flask_app):
                     columns=[],
                     data=[],
                     page_action='none',
+                    fixed_rows={'headers': True},  # ← ヘッダー固定
                     style_table={
-                        'height': '400px',
+                        'height': '500px',
                         'overflowY': 'auto',
                         'overflowX': 'auto',
                         'width': '100%'   # 子Divに合わせて幅100%
@@ -51,8 +52,9 @@ def create_dash_app(flask_app):
                     columns=[],
                     data=[],
                     page_action='none',
+                    fixed_rows={'headers': True},  # ← ヘッダー固定
                     style_table={
-                        'height': '400px',
+                        'height': '500px',
                         'overflowY': 'auto',
                         'overflowX': 'auto',
                         'width': '100%'   # 子Divに合わせて幅100%
@@ -89,7 +91,16 @@ def create_dash_app(flask_app):
 
             df['期間'] = pd.to_datetime(df['期間'], errors='coerce')
             df.dropna(subset=['期間'], inplace=True)
+            
+            # まず datetime 型で昇順にソート
+            df = df.sort_values(by='期間')
+            
+            # テーブル用（日付フォーマット）
+            df['期間_table'] = df['期間'].dt.strftime("%Y/%m/%d")
+            
+            # グラフ用（月ごと）
             df['期間'] = df['期間'].dt.to_period('M').astype(str)
+            
             df = df[df['収入/支出'].isin(['収入', '支出'])]
 
             all_dfs.append(df)
@@ -140,7 +151,7 @@ def create_dash_app(flask_app):
             fig_pie_out = px.pie(title="対象データがありません")
 
         # 表示したい列だけ抽出
-        display_columns = ['期間', '資産', '分類', '小分類', '内容', 'メモ', '金額']
+        display_columns = ['期間_table', '資産', '分類', '小分類', '内容', 'メモ', '金額']
         income_df = income_df[display_columns]
         expenses_df = expenses_df[display_columns]
 
