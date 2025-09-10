@@ -17,6 +17,16 @@ def create_dash_app(flask_app):
 
     dash_app.layout = html.Div([
         html.H3("全Excelファイルを結合して表示（Dash）"),
+        
+        # ▼ 年選択プルダウンを追加
+        dcc.Dropdown(
+            id='year-dropdown',
+            options=[],  # 後でコールバックで埋める
+            value=None,
+            clearable=False,
+            style={'width': '200px', 'margin-bottom': '20px'}
+        ),
+        
         dcc.Graph(id='excel-graph'), # 棒グラフ
         html.Div([
             dcc.Graph(id='pie-in-chart', style={'width': '50%'}),  # 収入の円グラフ
@@ -70,6 +80,8 @@ def create_dash_app(flask_app):
     ])
 
     @dash_app.callback(
+        Output('year-dropdown', 'options'),
+        Output('year-dropdown', 'value'),
         Output('excel-graph', 'figure'),
         Output('pie-in-chart', 'figure'),
         Output('pie-out-chart', 'figure'),
@@ -77,9 +89,9 @@ def create_dash_app(flask_app):
         Output('income-table', 'data'),
         Output('expenses-table', 'columns'),
         Output('expenses-table', 'data'),
-        Input('excel-graph', 'id')
+        Input('year-dropdown', 'value')
     )
-    def update_graph(_):
+    def update_graph(selected_year):
         all_dfs = []
 
         for file in excel_files:
@@ -91,25 +103,36 @@ def create_dash_app(flask_app):
 
             df['期間'] = pd.to_datetime(df['期間'], errors='coerce')
             df.dropna(subset=['期間'], inplace=True)
-            
+
+            # 年列を追加
+            df['年'] = df['期間'].dt.year
+
             # まず datetime 型で昇順にソート
             df = df.sort_values(by='期間')
-            
+
             # テーブル用（日付フォーマット）
             df['期間_table'] = df['期間'].dt.strftime("%Y/%m/%d")
-            
+
             # グラフ用（月ごと）
             df['期間'] = df['期間'].dt.to_period('M').astype(str)
-            
-            df = df[df['収入/支出'].isin(['収入', '支出'])]
 
+            df = df[df['収入/支出'].isin(['収入', '支出'])]
             all_dfs.append(df)
 
         if not all_dfs:
             empty_fig = px.bar(title="対象データがありません")
-            return empty_fig, px.pie(title="対象データがありません"), px.pie(title="対象データがありません"), [], [], [], []
+            return [], None, empty_fig, px.pie(title="対象データがありません"), px.pie(title="対象データがありません"), [], [], [], []
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
+
+        # 年のリストを作成
+        years = sorted(combined_df['年'].unique())
+        options = [{'label': str(y), 'value': y} for y in years]
+        if selected_year is None:
+            selected_year = years[-1]  # 最新の年をデフォルトにする
+
+        # 年でフィルタリング
+        combined_df = combined_df[combined_df['年'] == selected_year]
 
         # 棒グラフ
         summary_bar = combined_df.groupby(['期間', '収入/支出'])['金額'].sum().reset_index()
@@ -189,6 +212,6 @@ def create_dash_app(flask_app):
         expenses_columns = [{"name": i, "id": i} for i in expenses_df.columns] if not expenses_df.empty else []
         expenses_data = expenses_df.to_dict('records') if not expenses_df.empty else []
 
-        return fig_bar, fig_pie_in, fig_pie_out, income_columns, income_data, expenses_columns, expenses_data
+        return options, selected_year, fig_bar, fig_pie_in, fig_pie_out, income_columns, income_data, expenses_columns, expenses_data
 
     return dash_app
