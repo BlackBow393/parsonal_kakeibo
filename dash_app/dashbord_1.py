@@ -16,16 +16,59 @@ def create_dash_app(flask_app):
     excel_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.xlsx')]
 
     dash_app.layout = html.Div([
-        html.H3("全Excelファイルを結合して表示（Dash）"),
+        html.H2("収支の月別推移"),
         
-        # ▼ 年選択プルダウンを追加
-        dcc.Dropdown(
-            id='year-dropdown',
-            options=[],  # 後でコールバックで埋める
-            value=None,
-            clearable=False,
-            style={'width': '200px', 'margin-bottom': '20px'}
-        ),
+        html.Div([
+            html.Div([
+                html.H3("年"),
+                # ▼ 年選択プルダウンを追加
+                dcc.Dropdown(
+                    id='year-dropdown',
+                    options=[],  # 後でコールバックで埋める
+                    value=None,
+                    clearable=False,
+                    style={'width': '200px', 'margin-bottom': '20px'}
+                )
+            ],style={'margin-right': '20px'}),
+            
+            html.Div([
+                html.H3("月"),
+                # ▼ 月プルダウン
+                dcc.Dropdown(
+                    id='month-dropdown',
+                    options=[{'label': "すべて", 'value': 'all'}] + [
+                        {'label': f"{m}月", 'value': m} for m in range(1, 13)
+                    ],
+                    value='all',  # デフォルトは「すべて」
+                    clearable=False,
+                    style={'width': '200px', 'margin-bottom': '20px'}
+                )
+            ],style={'margin-right': '20px'}),
+            
+            html.Div([
+                html.H3("収入分類"),
+                # ▼ 収入分類プルダウン
+                dcc.Dropdown(
+                    id='income-category-dropdown',
+                    options=[],  # データから動的に作る
+                    value='all',
+                    clearable=False,
+                    style={'width': '200px', 'margin-bottom': '20px'}
+                )
+            ],style={'margin-right': '20px'}),
+            
+            html.Div([
+                html.H3("支出分類"),
+                # ▼ 支出分類プルダウン
+                dcc.Dropdown(
+                    id='expense-category-dropdown',
+                    options=[],  # データから動的に作る
+                    value='all',
+                    clearable=False,
+                    style={'width': '200px', 'margin-bottom': '20px'}
+                )
+            ],style={'margin-right': '20px'})
+        ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
         
         dcc.Graph(id='excel-graph'), # 棒グラフ
         html.Div([
@@ -82,6 +125,10 @@ def create_dash_app(flask_app):
     @dash_app.callback(
         Output('year-dropdown', 'options'),
         Output('year-dropdown', 'value'),
+        Output('income-category-dropdown', 'options'),
+        Output('income-category-dropdown', 'value'),
+        Output('expense-category-dropdown', 'options'),
+        Output('expense-category-dropdown', 'value'),
         Output('excel-graph', 'figure'),
         Output('pie-in-chart', 'figure'),
         Output('pie-out-chart', 'figure'),
@@ -89,9 +136,12 @@ def create_dash_app(flask_app):
         Output('income-table', 'data'),
         Output('expenses-table', 'columns'),
         Output('expenses-table', 'data'),
-        Input('year-dropdown', 'value')
+        Input('year-dropdown', 'value'),
+        Input('month-dropdown', 'value'),
+        Input('income-category-dropdown', 'value'),
+        Input('expense-category-dropdown', 'value')
     )
-    def update_graph(selected_year):
+    def update_graph(selected_year, selected_month, selected_income_category, selected_expense_category):
         all_dfs = []
 
         for file in excel_files:
@@ -133,6 +183,39 @@ def create_dash_app(flask_app):
 
         # 年でフィルタリング
         combined_df = combined_df[combined_df['年'] == selected_year]
+        
+        # ▼ 月でフィルタリング
+        if selected_month != 'all':
+            # 期間は "YYYY-MM" 形式なので startswith で判定できる
+            combined_df = combined_df[
+                combined_df['期間'].str.startswith(f"{selected_year}-{int(selected_month):02d}")
+            ]
+
+        # ▼ 収入分類のリストを作成
+        income_categories = sorted(combined_df[combined_df['収入/支出'] == '収入']['分類'].dropna().unique())
+        category_options_income = [{'label': 'すべて', 'value': 'all'}] + [{'label': c, 'value': c} for c in income_categories]
+
+        # デフォルト選択
+        if selected_income_category is None or selected_income_category not in [c['value'] for c in category_options_income]:
+            selected_income_category = 'all'
+
+        # ▼ 分類でフィルタリング
+        if selected_income_category != 'all':
+            combined_df = combined_df[~combined_df['分類'].isna()]
+            combined_df = combined_df[combined_df['分類'] == selected_income_category]
+            
+        # ▼ 支出分類のリストを作成
+        expense_categories = sorted(combined_df[combined_df['収入/支出'] == '支出']['分類'].dropna().unique())
+        category_options_expense = [{'label': 'すべて', 'value': 'all'}] + [{'label': c, 'value': c} for c in expense_categories]
+
+        # デフォルト選択
+        if selected_expense_category is None or selected_expense_category not in [c['value'] for c in category_options_expense]:
+            selected_expense_category = 'all'
+
+        # ▼ 分類でフィルタリング
+        if selected_expense_category != 'all':
+            combined_df = combined_df[~combined_df['分類'].isna()]
+            combined_df = combined_df[combined_df['分類'] == selected_expense_category]
 
         # 棒グラフ
         summary_bar = combined_df.groupby(['期間', '収入/支出'])['金額'].sum().reset_index()
@@ -146,7 +229,7 @@ def create_dash_app(flask_app):
             labels={'金額': '金額（円）', '期間': '期間'}
         )
         fig_bar.update_layout(
-            xaxis=dict(tickformat='%Y年%m月', rangeslider=dict(visible=True)),
+            xaxis=dict(tickformat='%Y年%m月', rangeslider=dict(visible=False)),
             yaxis=dict(tickformat=',', tickprefix='￥')
         )
 
@@ -212,6 +295,20 @@ def create_dash_app(flask_app):
         expenses_columns = [{"name": i, "id": i} for i in expenses_df.columns] if not expenses_df.empty else []
         expenses_data = expenses_df.to_dict('records') if not expenses_df.empty else []
 
-        return options, selected_year, fig_bar, fig_pie_in, fig_pie_out, income_columns, income_data, expenses_columns, expenses_data
+        return (
+            options, 
+            selected_year, 
+            category_options_income, 
+            selected_income_category,
+            category_options_expense, 
+            selected_expense_category,
+            fig_bar, 
+            fig_pie_in, 
+            fig_pie_out, 
+            income_columns, 
+            income_data, 
+            expenses_columns, 
+            expenses_data
+        )
 
     return dash_app
