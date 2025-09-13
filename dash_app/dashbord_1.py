@@ -93,7 +93,16 @@ def create_dash_app(flask_app):
                         'textAlign': 'left',
                         'minWidth': '100px',
                         'width': 'auto'
-                    }
+                    },
+                    style_header_conditional=[
+                        {'if': {'column_id': '金額'}, 'backgroundColor': 'cornflowerblue', 'color': 'white'},
+                        {'if': {'column_id': '期間_table'}, 'backgroundColor': 'cornflowerblue', 'color': 'white'},
+                        {'if': {'column_id': '資産'}, 'backgroundColor': 'cornflowerblue', 'color': 'white'},
+                        {'if': {'column_id': '分類'}, 'backgroundColor': 'cornflowerblue', 'color': 'white'},
+                        {'if': {'column_id': '小分類'}, 'backgroundColor': 'cornflowerblue', 'color': 'white'},
+                        {'if': {'column_id': '内容'}, 'backgroundColor': 'cornflowerblue', 'color': 'white'},
+                        {'if': {'column_id': 'メモ'}, 'backgroundColor': 'cornflowerblue', 'color': 'white'}
+                    ]
                 )
             ], style={'width': '50%', 'padding-right': '5px'}),  # 画面半分
 
@@ -115,7 +124,16 @@ def create_dash_app(flask_app):
                         'textAlign': 'left',
                         'minWidth': '100px',
                         'width': 'auto'
-                    }
+                    },
+                    style_header_conditional=[
+                        {'if': {'column_id': '金額'}, 'backgroundColor': 'tomato', 'color': 'white'},
+                        {'if': {'column_id': '期間_table'}, 'backgroundColor': 'tomato', 'color': 'white'},
+                        {'if': {'column_id': '資産'}, 'backgroundColor': 'tomato', 'color': 'white'},
+                        {'if': {'column_id': '分類'}, 'backgroundColor': 'tomato', 'color': 'white'},
+                        {'if': {'column_id': '小分類'}, 'backgroundColor': 'tomato', 'color': 'white'},
+                        {'if': {'column_id': '内容'}, 'backgroundColor': 'tomato', 'color': 'white'},
+                        {'if': {'column_id': 'メモ'}, 'backgroundColor': 'tomato', 'color': 'white'}
+                    ]
                 )
             ], style={'width': '50%', 'padding-left': '5px'})   # 画面半分
         ], style={'display': 'flex', 'gap': '0px'})  # 横並び
