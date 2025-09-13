@@ -42,3 +42,62 @@ footer .footer_item {
     color: white;
     height: auto;
 }
+
+/* サイドバー */
+.sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1500;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.3s;
+    padding-top: 60px;
+}
+
+.sidebar a {
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 24px;
+    color: #f1f1f1;
+    display: block;
+    transition: 0.2s;
+}
+
+.sidebar a:hover {
+    background-color: #575757;
+}
+
+/* オーバーレイ（背景半透明） */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0,0,0,0.5); /* 半透明黒 */
+    display: none; /* 初期は非表示 */
+    z-index: 1400;
+}
+
+/* メニューボタン */
+.menu-btn {
+    position: absolute;   /* ← fixed ではなく absolute にする */
+    top: 15px;
+    left: 15px;
+    font-size: 26px;
+    background-color: #4682b4;
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 2000;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+
+.menu-btn:hover {
+    background-color: #315f86;
+}

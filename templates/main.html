@@ -6,10 +6,24 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
 </head>
 <body>
+    <!-- サイドバー -->
+    <div id="sidebar" class="sidebar">
+        <a href="#">メインメニュー</a>
+        <a href="#">資産分析</a>
+        <a href="#">設定</a>
+    </div>
+
+    <!-- オーバーレイ -->
+    <div id="overlay" class="overlay" onclick="closeSidebar()"></div>
+
+    <!-- メニューボタン（最前面固定） -->
+    <button id="menu-toggle" class="menu-btn" onclick="toggleSidebar()">&#9776;</button>
+    
     <!--画面共通のヘッダー-->
     <header>
         <h1>個人家計簿</h1>
         <h2>メインメニュー</h2>
+        <button class="header-btn right-btn">更新</button>
     </header>
     <main>
         <!--分析画面-->
@@ -22,5 +36,7 @@
         <!--アプリバージョン-->
         <p class="footer_item">Ver.1.0.0</p>
     </footer>
+    <!-- 外部JSファイルを読み込み -->
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
