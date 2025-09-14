@@ -11,7 +11,7 @@ def create_dash_app(flask_app):
         assets_folder="assets"
     )
 
-    DATA_DIR = "data"
+    DATA_DIR = r"C:\Users\t9374\OneDrive\デスクトップ\家計簿保存先"
     excel_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.xlsx')]
 
     dash_app.layout = html.Div([

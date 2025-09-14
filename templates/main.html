@@ -23,7 +23,7 @@
     <header>
         <h1>個人家計簿</h1>
         <h2>メインメニュー</h2>
-        <button class="header-btn right-btn">更新</button>
+        <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">&#10227;</button>
     </header>
     <main>
         <!--分析画面-->
@@ -38,5 +38,6 @@
     </footer>
     <!-- 外部JSファイルを読み込み -->
     <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <script src="{{ url_for('static', filename='routes.js') }}"></script>
 </body>
 </html>
