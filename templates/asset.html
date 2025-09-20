@@ -3,7 +3,7 @@
 <head>
     <title>個人家計簿アプリ</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/header_main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/header_asset.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common_btn.css') }}">
 </head>
@@ -24,12 +24,11 @@
     <!--画面共通のヘッダー-->
     <header>
         <h1>個人家計簿</h1>
-        <h2>メインメニュー</h2>
+        <h2>資産分析</h2>
         <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">&#10227;</button>
     </header>
     <main>
         <!--分析画面-->
-        <iframe src="/dash/" width="100%" height="1605" style="border:none;"></iframe>
     </main>
     <!--画面共通のフッター-->
     <footer>
