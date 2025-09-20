@@ -1,8 +1,9 @@
-from flask import Flask, render_template
-from flask import request, jsonify
+from flask import Flask, render_template, jsonify
 from dash_app.routes import routes_bp
 from dash_app.dashbord_1 import create_dash_app
-import os
+from dash_app.folder_selecter import choose_folder
+import os, json
+
 print("実際に動いているファイル:", __file__)
 print("現在のカレントディレクトリ:", os.getcwd())
 
@@ -10,6 +11,20 @@ app = Flask(__name__)
 app.register_blueprint(routes_bp)  # ← Blueprintを登録
 
 create_dash_app(app)
+
+CONFIG_FILE = "config.json"
+
+# 設定ファイル読み込み
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+# 設定ファイル保存
+def save_config(config):
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(config, f, ensure_ascii=False, indent=4)
 
 @app.route('/')
 def home():
@@ -23,15 +38,16 @@ def asset():
 def setting():
     return render_template('setting.html')
 
-@app.route("/get_fullpath", methods=["POST"])
-def get_fullpath():
-    data = request.json
-    relative_path = data.get("relativePath", "")
+@app.route("/select_folder", methods=["GET"])
+def select_folder():
+    # メインスレッドで Tkinter を呼ぶ
+    folder_path = choose_folder()
+    if folder_path:
+        config = load_config()
+        config["folder_path"] = folder_path
+        save_config(config)
+    return jsonify({"folderPath": folder_path if folder_path else ""})
 
-    # Flaskの実行ディレクトリから見たフルパスを作成
-    full_path = os.path.abspath(relative_path)
-
-    return jsonify({"fullPath": full_path})
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5050)
+if __name__ == "__main__":
+    # threaded=False にすることでリクエストもメインスレッドで処理
+    app.run(debug=True, threaded=False, port=5050)

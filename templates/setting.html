@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/header_setting.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/setting.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common_btn.css') }}">
 </head>
 <body>
@@ -31,10 +32,10 @@
         <!--設定画面-->
         <div class="setting_area">
             <h2>取り込みフォルダ</h2>
-            <!-- フォルダ選択用 input -->
-            <input type="file" id="folderInput" webkitdirectory directory multiple>
-            <!-- 選択結果を表示するテキストボックス -->
-            <input type="text" id="folderPath" readonly>
+            <!-- フォルダ選択 input -->
+            <button id="selectFolderBtn">フォルダを選択</button>
+            <!-- 保存先パスを表示 -->
+            <input type="text" id="folderPath" value="{{ folder_path }}" readonly>
         </div>
     </main>
     <!--画面共通のフッター-->
