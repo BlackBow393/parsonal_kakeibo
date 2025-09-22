@@ -3,13 +3,31 @@ import os
 import time
 import win32com.client
 import pythoncom
+import json
 
 routes_bp = Blueprint("routes", __name__)
-SAVE_DIR = r"C:\Users\t9374\OneDrive\デスクトップ\家計簿保存先"
+CONFIG_FILE = "config.json"
+
+# 設定ファイル読み込み
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
 
 @routes_bp.route("/refresh", methods=["POST"])
 def update_mail():
     try:
+        config = load_config()
+        SAVE_DIR = config.get("folder_path")
+
+        # 保存先が未設定の場合は警告
+        if not SAVE_DIR:
+            return jsonify({
+                "status": "error",
+                "message": "保存先が設定されていません。設定画面から保存先を選択してください。"
+            })
+
         os.makedirs(SAVE_DIR, exist_ok=True)
 
         pythoncom.CoInitialize()
@@ -27,10 +45,10 @@ def update_mail():
             if messages.Count > 0:
                 break
             else:
-                time.sleep(2)  # 待ってから再取得
+                time.sleep(2)
 
         if messages and messages.Count > 0:
-            for msg in list(messages):  # list()で確定
+            for msg in list(messages):
                 try:
                     if "家計簿" in (msg.Subject or ""):
                         _ = msg.Body  # 本文アクセスで強制ロード

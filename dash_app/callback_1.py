@@ -1,8 +1,17 @@
 import pandas as pd
 import plotly.express as px
-from dash import Input, Output
+from dash import Input, Output, html
+import os, json
 
-def register_callbacks(dash_app, excel_files, DATA_DIR):
+CONFIG_FILE = "config.json"
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def register_callbacks(dash_app):
     @dash_app.callback(
         Output('year-dropdown', 'options'),
         Output('year-dropdown', 'value'),
@@ -23,10 +32,16 @@ def register_callbacks(dash_app, excel_files, DATA_DIR):
         Input('expense-category-dropdown', 'value')
     )
     def update_graph(selected_year, selected_month, selected_income_category, selected_expense_category):
-        # --- 元データ読み込み ---
+        # --- 最新の設定を取得 ---
+        config = load_config()
+        DATA_DIR = config.get("folder_path")
+
+        # ここから先は通常のデータ読み込み・グラフ生成処理
         all_dfs = []
-        for file in excel_files:
-            path = f"{DATA_DIR}/{file}"
+        for file in os.listdir(DATA_DIR):
+            if not file.endswith('.xlsx'):
+                continue
+            path = os.path.join(DATA_DIR, file)
             df = pd.read_excel(path)
             if '期間' not in df.columns or '収入/支出' not in df.columns or '金額' not in df.columns:
                 continue
@@ -40,26 +55,25 @@ def register_callbacks(dash_app, excel_files, DATA_DIR):
 
         if not all_dfs:
             empty_fig = px.bar(title="対象データがありません")
-            return [], None, [], 'all', [], 'all', empty_fig, px.pie(title="対象データがありません"), px.pie(title="対象データがありません"), [], [], [], []
+            empty_pie = px.pie(title="対象データがありません")
+            return ([], None, [], 'all', [], 'all', empty_fig, empty_pie, empty_pie, [], [], [], [])
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
 
-        # --- 年リスト作成 ---
+        # 以下は既存のグラフ・テーブル生成コードをそのまま使用
+        # 年リスト作成、月・カテゴリフィルタ、棒グラフ、円グラフ、テーブル生成
         years = sorted(combined_df['年'].unique())
         year_options = [{'label': str(y), 'value': y} for y in years]
         if selected_year is None:
             selected_year = years[-1]
 
-        # 年フィルタ
         df_filtered = combined_df[combined_df['年'] == selected_year]
 
-        # --- 月フィルタ ---
         if selected_month != 'all':
-            # selected_month は 1～12 の整数
-            month_str = f"{selected_year}-{int(selected_month):02d}"  # "2025-09" の形式に
+            month_str = f"{selected_year}-{int(selected_month):02d}"
             df_filtered = df_filtered[df_filtered['期間'] == month_str]
 
-        # --- 収入カテゴリ ---
+        # 収入カテゴリ
         income_categories = sorted(df_filtered[df_filtered['収入/支出']=='収入']['分類'].dropna().unique())
         income_options = [{'label':'すべて','value':'all'}] + [{'label':c,'value':c} for c in income_categories]
         if selected_income_category not in [c['value'] for c in income_options]:
@@ -67,7 +81,7 @@ def register_callbacks(dash_app, excel_files, DATA_DIR):
         if selected_income_category != 'all':
             df_filtered = df_filtered[df_filtered['分類'] == selected_income_category]
 
-        # --- 支出カテゴリ ---
+        # 支出カテゴリ
         expense_categories = sorted(df_filtered[df_filtered['収入/支出']=='支出']['分類'].dropna().unique())
         expense_options = [{'label':'すべて','value':'all'}] + [{'label':c,'value':c} for c in expense_categories]
         if selected_expense_category not in [c['value'] for c in expense_options]:
@@ -75,33 +89,25 @@ def register_callbacks(dash_app, excel_files, DATA_DIR):
         if selected_expense_category != 'all':
             df_filtered = df_filtered[df_filtered['分類'] == selected_expense_category]
 
-        # --- 棒グラフ作成 ---
+        # 棒グラフ
         summary_bar = df_filtered.groupby(['期間','収入/支出'])['金額'].sum().reset_index()
         fig_bar = px.bar(summary_bar, x='期間', y='金額', color='収入/支出', barmode='group',
                          title="期間別収支分類", labels={'金額':'金額（円）','期間':'期間'},
-                         color_discrete_map={
-                            '収入': 'cornflowerblue',   # 収入は青
-                            '支出': 'tomato'     # 支出は赤
-                            }
-                        )
+                         color_discrete_map={'収入':'cornflowerblue', '支出':'tomato'})
         fig_bar.update_layout(xaxis=dict(tickformat='%Y年%m月', rangeslider=dict(visible=False)),
                               yaxis=dict(tickformat=',', tickprefix='￥'))
 
-        # --- 円グラフ作成関数 ---
+        # 円グラフ作成
         def make_pie(df, title):
             if df.empty or '分類' not in df.columns:
                 return px.pie(title="対象データがありません")
-            
             grouped = df.groupby('分類')['金額'].sum().reset_index()
             non_other = grouped[grouped['分類'] != 'その他'].sort_values('金額', ascending=False)
             other = grouped[grouped['分類'] == 'その他']
             grouped = pd.concat([non_other, other])
-            
             categories = grouped['分類'].tolist()
             grouped['分類'] = pd.Categorical(grouped['分類'], categories=categories, ordered=True)
-            
-            # その他以外はデフォルト色、その他だけ dimgray
-            default_colors = px.colors.qualitative.Plotly  # デフォルトのパレット
+            default_colors = px.colors.qualitative.Plotly
             color_map = {}
             j = 0
             for c in categories:
@@ -110,23 +116,15 @@ def register_callbacks(dash_app, excel_files, DATA_DIR):
                 else:
                     color_map[c] = default_colors[j % len(default_colors)]
                     j += 1
-            
-            fig = px.pie(
-                grouped,
-                names='分類',
-                values='金額',
-                title=title,
-                category_orders={'分類': categories},
-                color='分類',
-                color_discrete_map=color_map
-            )
+            fig = px.pie(grouped, names='分類', values='金額', title=title,
+                         category_orders={'分類': categories}, color='分類', color_discrete_map=color_map)
             fig.update_traces(sort=False, direction='clockwise')
             return fig
 
-        fig_pie_in = make_pie(df_filtered[df_filtered['収入/支出']=='収入'],'収入の分類割合')
-        fig_pie_out = make_pie(df_filtered[df_filtered['収入/支出']=='支出'],'支出の分類割合')
+        fig_pie_in = make_pie(df_filtered[df_filtered['収入/支出']=='収入'], '収入の分類割合')
+        fig_pie_out = make_pie(df_filtered[df_filtered['収入/支出']=='支出'], '支出の分類割合')
 
-        # --- テーブル ---
+        # テーブル
         display_cols = ['期間_table','資産','分類','小分類','内容','メモ','金額']
         income_df = df_filtered[df_filtered['収入/支出']=='収入'][display_cols] if not df_filtered.empty else pd.DataFrame()
         expenses_df = df_filtered[df_filtered['収入/支出']=='支出'][display_cols] if not df_filtered.empty else pd.DataFrame()
