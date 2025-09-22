@@ -36,7 +36,9 @@ def asset():
 
 @app.route('/setting')
 def setting():
-    return render_template('setting.html')
+    config = load_config()
+    folder_path = config.get("folder_path", "")  # 保存済みフォルダパスを取得
+    return render_template('setting.html', folder_path=folder_path)
 
 @app.route("/select_folder", methods=["GET"])
 def select_folder():

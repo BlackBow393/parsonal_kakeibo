@@ -1,4 +1,19 @@
+main .setting_area {
+    margin: 5px 0;
+}
+
+main .setting_area #selectFolderBtn {
+    width: 3%;
+    font-size: 30px;
+    text-align: center;
+    background-color: dimgray;
+    border-width: 3px;
+    padding: 8px;
+}
+
 main .setting_area #folderPath {
-    font-size: 20px;
-    width: 600px;
+    font-size: 24px;
+    width: 80%;
+    height: 40px;
+    margin: 0 5px;
 }
