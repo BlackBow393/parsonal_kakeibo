@@ -52,6 +52,26 @@ def register_callbacks(dash_app):
             return ([], None, [], 'all', empty_fig, empty_fig, empty_fig, empty_fig, empty_fig)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
+        
+        # --- 初期資産リストを DataFrame に変換 ---
+        initial_assets_list = [
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "JAバンク", "収入/支出": "収入", "金額": 75948},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "楽天銀行", "収入/支出": "収入", "金額": 169187},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "楽天カード", "収入/支出": "支出", "金額": 7000},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "現金", "収入/支出": "収入", "金額": 30944},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "シェルカード", "収入/支出": "支出", "金額": 11516},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "manaca", "収入/支出": "収入", "金額": 119},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "PayPayマネー", "収入/支出": "収入", "金額": 19177},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "岡崎信用金庫", "収入/支出": "収入", "金額": 541002},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "楽天証券NISA", "収入/支出": "収入", "金額": 103395},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "碧海信用金庫", "収入/支出": "収入", "金額": 140323},
+            {"期間": "2023-12-31", "年": 2023, "月": 12, "資産": "労働信用金庫", "収入/支出": "収入", "金額": 234827}
+        ]
+        df_initial_assets = pd.DataFrame(initial_assets_list)
+        df_initial_assets['期間'] = pd.to_datetime(df_initial_assets['期間'])
+
+        # --- Excel データと結合 ---
+        combined_df = pd.concat([combined_df, df_initial_assets], ignore_index=True)
 
         # 年リスト作成
         years = sorted(combined_df['年'].unique())
@@ -74,7 +94,7 @@ def register_callbacks(dash_app):
             df_filtered = df_filtered[df_filtered['資産'] == selected_assets_category]
 
         # 符号付き金額（収入・預け入れは加算、支出・引き出しは減算）
-        df_balance = df_filtered.copy()
+        df_balance = combined_df.copy()
         df_balance['符号付き金額'] = df_balance.apply(
             lambda row: row['金額'] if row['収入/支出'] in ['収入', '預け入れ'] else -row['金額'],
             axis=1
@@ -100,32 +120,42 @@ def register_callbacks(dash_app):
         }
         df_balance['資産グループ'] = df_balance['資産'].map(group_map)
 
-        # 2つのグラフを格納する辞書
+        # 累計グラフ用（全期間）
+        df_cumsum = df_balance.copy()  # 全期間を使う
+
         figs = {}
-        for group_name in ["ローン・奨学金", "カード","現金","電子マネー","銀行"]:
-            df_group = df_balance[df_balance['資産グループ'] == group_name].copy()
+        
+        # X軸の表示範囲を決める
+        x_range = None
+        if selected_year is not None:
+            if selected_month == 'all':
+                # 年だけ指定 → その年の1月〜12月
+                x_range = [f"{selected_year}-01", f"{selected_year}-12"]
+            else:
+                # 年＋月指定 → その月のみ
+                month_str = f"{selected_year}-{int(selected_month):02d}"
+                x_range = [month_str, month_str]
+        
+        for group_name in ["ローン・奨学金", "カード", "現金", "電子マネー", "銀行"]:
+            df_group = df_cumsum[df_cumsum['資産グループ'] == group_name].copy()
             if df_group.empty:
                 figs[group_name] = px.area(title=f"{group_name} の対象データがありません")
                 continue
 
-            # 集計
             summary_area = df_group.groupby(['期間', '資産'])['符号付き金額'].sum().reset_index()
-
-            # 累計化
             summary_area = summary_area.sort_values(['資産', '期間'])
             summary_area['累計金額'] = summary_area.groupby('資産')['符号付き金額'].cumsum()
 
-            # 面グラフ作成
             fig = px.area(
                 summary_area,
                 x='期間',
                 y='累計金額',
                 color='資産',
-                title=f"{group_name} の残高推移（累計）",
+                title=f"{group_name} の残高推移（累計・全期間）",
                 labels={'累計金額': '残高（円）', '期間': '期間'}
             )
             fig.update_layout(
-                xaxis=dict(tickformat='%Y年%m月', rangeslider=dict(visible=False)),
+                xaxis=dict(tickformat='%Y年%m月', rangeslider=dict(visible=False),range=x_range),
                 yaxis=dict(tickformat=',', tickprefix='￥')
             )
             figs[group_name] = fig

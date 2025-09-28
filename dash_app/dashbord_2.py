@@ -41,11 +41,11 @@ def create_dash_app2(flask_app):
             ], style={'margin-right': '20px'})
         ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
         
-        dcc.Graph(id='cash-graph'),
-        dcc.Graph(id='cashles-graph'),
-        dcc.Graph(id='bank-graph'),
-        dcc.Graph(id='card-graph'),
-        dcc.Graph(id='loan-graph')
+        dcc.Graph(id='cash-graph', style={'width': '100%', 'height': '450px'}),
+        dcc.Graph(id='cashles-graph', style={'width': '100%', 'height': '450px'}),
+        dcc.Graph(id='bank-graph', style={'width': '100%', 'height': '450px'}),
+        dcc.Graph(id='card-graph', style={'width': '100%', 'height': '450px'}),
+        dcc.Graph(id='loan-graph', style={'width': '100%', 'height': '450px'})
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）
