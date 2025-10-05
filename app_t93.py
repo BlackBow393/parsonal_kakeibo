@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify
 from dash_app.routes import routes_bp
 from dash_app.dashbord_1 import create_dash_app
 from dash_app.dashbord_2 import create_dash_app2
+from dash_app.dashbord_3 import create_dash_app3
 from dash_app.folder_selecter import choose_folder
 import os, json
 
@@ -13,6 +14,7 @@ app.register_blueprint(routes_bp)  # ← Blueprintを登録
 
 create_dash_app(app)
 create_dash_app2(app)
+create_dash_app3(app)
 
 CONFIG_FILE = "config.json"
 
@@ -35,6 +37,10 @@ def home():
 @app.route('/asset')
 def asset():
     return render_template('asset.html')
+
+@app.route('/income')
+def income():
+    return render_template('income.html')
 
 @app.route('/setting')
 def setting():
