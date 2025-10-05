@@ -45,7 +45,10 @@ def create_dash_app3(flask_app):
                 dcc.Dropdown(id='income-subcategory-dropdown', options=[], value='all', clearable=False,
                              style={'width': '200px', 'margin-bottom': '20px'})
             ], style={'margin-right': '20px'})
-        ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'})
+        ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
+        
+        dcc.Graph(id='year-graph'),
+        dcc.Graph(id='line-graph')
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）
