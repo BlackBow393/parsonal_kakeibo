@@ -17,7 +17,7 @@ def create_dash_app3(flask_app):
         html.Div([
             html.Div([
                 html.H3("年"),
-                dcc.Dropdown(id='year-dropdown', options=[], value=None, clearable=False,
+                dcc.Dropdown(id='year-dropdown', options=[], value='all', clearable=False,
                              style={'width': '200px', 'margin-bottom': '20px'})
             ], style={'margin-right': '20px'}),
             
@@ -48,7 +48,11 @@ def create_dash_app3(flask_app):
         ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
         
         dcc.Graph(id='year-graph'),
-        dcc.Graph(id='line-graph')
+        dcc.Graph(id='line-graph'),
+        html.Div([
+            dcc.Graph(id='pie-in-chart', style={'width': '50%'}),
+            dcc.Graph(id='pie-in-subchart', style={'width': '50%'})
+            ], style={'display': 'flex'})
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）

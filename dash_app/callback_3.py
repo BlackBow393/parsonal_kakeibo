@@ -21,6 +21,8 @@ def register_callbacks(dash_app):
         Output('income-subcategory-dropdown', 'value'),
         Output('year-graph', 'figure'),
         Output('line-graph', 'figure'),
+        Output('pie-in-chart', 'figure'),
+        Output('pie-in-subchart', 'figure'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('income-category-dropdown', 'value'),
@@ -58,11 +60,21 @@ def register_callbacks(dash_app):
         # 以下は既存のグラフ・テーブル生成コードをそのまま使用
         # 年リスト作成、月・カテゴリフィルタ、棒グラフ、円グラフ、テーブル生成
         years = sorted(combined_df['年'].unique())
-        year_options = [{'label': str(y), 'value': y} for y in years]
+        year_options = [{'label':'すべて','value':'all'}] + [{'label': str(y), 'value': y} for y in years]
         if selected_year is None:
             selected_year = years[-1]
+        
+        if selected_year != 'all':
+            # 特定の年 → その年だけを使う
+            df_filtered = combined_df[combined_df['年'] == selected_year]
 
-        df_filtered = combined_df[combined_df['年'] == selected_year]
+            # 月単位のままでもOK
+            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
+
+        else:
+            # すべて選択 → 月単位をまとめて年単位に集約
+            df_filtered = combined_df.copy()
+            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
 
         if selected_month != 'all':
             month_str = f"{selected_year}-{int(selected_month):02d}"
@@ -85,7 +97,7 @@ def register_callbacks(dash_app):
             df_filtered = df_filtered[df_filtered['小分類'] == selected_income_subcategory]
             
         # --- 📊 年別・分類別の積み上げ棒グラフ ---
-        df_bar = combined_df.groupby(['年', '分類'], as_index=False)['金額'].sum()
+        df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
         
         # 年ごとの合計金額を計算（ラベル用）
         df_total = df_bar.groupby('年', as_index=False)['金額'].sum()
@@ -96,8 +108,7 @@ def register_callbacks(dash_app):
             y='金額',
             color='分類',
             title="年別 収入分類の内訳",
-            labels={'金額': '金額（円）', '年': '年'},
-            text_auto='.2s'
+            labels={'金額': '金額（円）', '年': '年'}
         )
         fig_bar.update_layout(barmode='stack', yaxis_tickformat=',', yaxis_title="金額（円）")
         
@@ -141,7 +152,62 @@ def register_callbacks(dash_app):
             yaxis_title="金額（円）"
         )
         
+        # 分類の円グラフ作成
+        def make_pie(df, title):
+            if df.empty or '分類' not in df.columns:
+                return px.pie(title="対象データがありません")
+            grouped = df.groupby('分類')['金額'].sum().reset_index()
+            non_other = grouped[grouped['分類'] != 'その他'].sort_values('金額', ascending=False)
+            other = grouped[grouped['分類'] == 'その他']
+            grouped = pd.concat([non_other, other])
+            categories = grouped['分類'].tolist()
+            grouped['分類'] = pd.Categorical(grouped['分類'], categories=categories, ordered=True)
+            default_colors = px.colors.qualitative.Plotly
+            color_map = {}
+            j = 0
+            for c in categories:
+                if c == 'その他':
+                    color_map[c] = 'dimgray'
+                else:
+                    color_map[c] = default_colors[j % len(default_colors)]
+                    j += 1
+            fig = px.pie(grouped, names='分類', values='金額', title=title,
+                         category_orders={'分類': categories}, color='分類', color_discrete_map=color_map)
+            fig.update_traces(sort=False, direction='clockwise')
+            return fig
+
+        fig_pie_in = make_pie(df_filtered[df_filtered['収入/支出']=='収入'], '収入の分類割合')
+        
+        # 小分類の円グラフ作成
+        def make_pie(df, title):
+            if df.empty or '小分類' not in df.columns:
+                return px.pie(title="対象データがありません")
+            # --- 🟢 小分類が空（NaNや空文字）のものを「その他」に置き換え ---
+            df['小分類'] = df['小分類'].replace('', pd.NA)
+            df['小分類'] = df['小分類'].fillna('その他')
+            sub_grouped = df.groupby('小分類')['金額'].sum().reset_index()
+            non_other_sub = sub_grouped[sub_grouped['小分類'] != 'その他'].sort_values('金額', ascending=False)
+            other_sub = sub_grouped[sub_grouped['小分類'] == 'その他']
+            sub_grouped = pd.concat([non_other_sub, other_sub])
+            sub_categories = sub_grouped['小分類'].tolist()
+            sub_grouped['小分類'] = pd.Categorical(sub_grouped['小分類'], categories=sub_categories, ordered=True)
+            default_colors = px.colors.qualitative.Plotly
+            color_map = {}
+            j = 0
+            for c in sub_categories:
+                if c == 'その他':
+                    color_map[c] = 'dimgray'
+                else:
+                    color_map[c] = default_colors[j % len(default_colors)]
+                    j += 1
+            fig = px.pie(sub_grouped, names='小分類', values='金額', title=title,
+                         category_orders={'小分類': sub_categories}, color='小分類', color_discrete_map=color_map)
+            fig.update_traces(sort=False, direction='clockwise')
+            return fig
+
+        fig_pie_in_sub = make_pie(df_filtered[df_filtered['収入/支出']=='収入'], '収入の小分類割合')
+        
         return (year_options, selected_year,
                 income_options, selected_income_category,
                 income_suboptions, selected_income_subcategory,
-                fig_bar, fig_line)
+                fig_bar, fig_line, fig_pie_in, fig_pie_in_sub)
