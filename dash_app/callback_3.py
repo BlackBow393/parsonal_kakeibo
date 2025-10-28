@@ -53,7 +53,8 @@ def register_callbacks(dash_app):
         if not all_dfs:
             empty_bar = px.bar(title="対象データがありません")
             empty_line = px.line(title="対象データがありません")
-            return ([], None, [], 'all', [], 'all', empty_bar, empty_line)
+            empty_pie = px.pie(title="対象データがありません")
+            return ([], None, [], 'all', [], 'all', empty_bar, empty_line, empty_pie, empty_pie)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
 
@@ -108,7 +109,8 @@ def register_callbacks(dash_app):
             y='金額',
             color='分類',
             title="年別 収入分類の内訳",
-            labels={'金額': '金額（円）', '年': '年'}
+            labels={'金額': '金額（円）', '年': '年'},
+            color_discrete_map={'その他': 'dimgray'} 
         )
         fig_bar.update_layout(barmode='stack', yaxis_tickformat=',', yaxis_title="金額（円）")
         
