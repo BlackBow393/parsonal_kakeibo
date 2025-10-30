@@ -1,5 +1,7 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+import numpy as np
 from dash import Input, Output
 import os, json
 
@@ -23,6 +25,7 @@ def register_callbacks(dash_app):
         Output('line-graph', 'figure'),
         Output('pie-in-chart', 'figure'),
         Output('pie-in-subchart', 'figure'),
+        Output('income-graph', 'figure'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('income-category-dropdown', 'value'),
@@ -54,7 +57,7 @@ def register_callbacks(dash_app):
             empty_bar = px.bar(title="対象データがありません")
             empty_line = px.line(title="対象データがありません")
             empty_pie = px.pie(title="対象データがありません")
-            return ([], None, [], 'all', [], 'all', empty_bar, empty_line, empty_pie, empty_pie)
+            return ([], None, [], 'all', [], 'all', empty_bar, empty_line, empty_pie, empty_pie,empty_bar)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
 
@@ -112,7 +115,16 @@ def register_callbacks(dash_app):
             labels={'金額': '金額（円）', '年': '年'},
             color_discrete_map={'その他': 'dimgray'} 
         )
-        fig_bar.update_layout(barmode='stack', yaxis_tickformat=',', yaxis_title="金額（円）")
+        fig_bar.update_layout(
+            barmode='stack', 
+            yaxis_tickformat=',', 
+            yaxis_title="金額（円）",
+            xaxis=dict(
+                tickmode='array',              # 目盛りを手動指定
+                tickvals=sorted(df_bar['年'].unique()),  # 年（整数）のみを表示
+                ticktext=[str(y) for y in sorted(df_bar['年'].unique())]  # 表示文字列
+            )
+        )
         
         # 各年の合計金額を上部に表示（text）
         for i, row in df_total.iterrows():
@@ -209,7 +221,53 @@ def register_callbacks(dash_app):
 
         fig_pie_in_sub = make_pie(df_filtered[df_filtered['収入/支出']=='収入'], '収入の小分類割合')
         
+        # --- 📊 年別・年収棒グラフ ---
+        # 分類が「給与」のデータだけ抽出
+        df_bar_income = combined_df[combined_df['分類'] == '💰 給料']
+        df_bar_income = df_bar_income.groupby(['年', '分類'], as_index=False)['金額'].sum()
+        
+        # 回帰直線を計算（線形近似）
+        # 年を数値型に変換（polyfitは数値でないと動かない）
+        x = df_bar_income['年'].astype(int)
+        y = df_bar_income['金額']
+        
+        # 1次式で近似（y = a*x + b）
+        a, b = np.polyfit(x, y, 1)
+        y_fit = a * x + b
+
+        fig_bar_income = px.bar(
+            df_bar_income,
+            x='年',
+            y='金額',
+            color='分類',
+            title="年収推移",
+            labels={'金額': '金額（円）', '年': '年'},
+            color_discrete_map={'💰 給料': 'cornflowerblue'} 
+        )
+        
+        # 回帰直線を追加
+        fig_bar_income.add_trace(
+            go.Scatter(
+                x=x,
+                y=y_fit,
+                mode='lines',
+                name='線形近似',
+                line=dict(color='red', width=2, dash='dash')
+            )
+        )
+        
+        fig_bar_income.update_layout(
+            barmode='stack', 
+            yaxis_tickformat=',', 
+            yaxis_title="金額（円）",
+            xaxis=dict(
+                tickmode='array',              # 目盛りを手動指定
+                tickvals=sorted(df_bar_income['年'].unique()),  # 年（整数）のみを表示
+                ticktext=[str(y) for y in sorted(df_bar_income['年'].unique())]  # 表示文字列
+            )
+        )
+        
         return (year_options, selected_year,
                 income_options, selected_income_category,
                 income_suboptions, selected_income_subcategory,
-                fig_bar, fig_line, fig_pie_in, fig_pie_in_sub)
+                fig_bar, fig_line, fig_pie_in, fig_pie_in_sub,fig_bar_income)

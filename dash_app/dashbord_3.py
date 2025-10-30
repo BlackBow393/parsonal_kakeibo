@@ -52,7 +52,8 @@ def create_dash_app3(flask_app):
         html.Div([
             dcc.Graph(id='pie-in-chart', style={'width': '50%'}),
             dcc.Graph(id='pie-in-subchart', style={'width': '50%'})
-            ], style={'display': 'flex'})
+            ], style={'display': 'flex'}),
+        dcc.Graph(id='income-graph')
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）
