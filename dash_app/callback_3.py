@@ -233,7 +233,16 @@ def register_callbacks(dash_app):
         
         # 1次式で近似（y = a*x + b）
         a, b = np.polyfit(x, y, 1)
+        
+        # --- 🔹 来年を外挿して追加 ---
+        next_year = x.max() + 1
+        y_next = a * next_year + b  # 来年の予測値
+        
         y_fit = a * x + b
+        
+        # 元データ + 来年の予測点をプロット用にまとめる
+        x_extended = np.append(x, next_year)
+        y_fit_extended = np.append(y_fit, y_next)
 
         fig_bar_income = px.bar(
             df_bar_income,
@@ -248,11 +257,24 @@ def register_callbacks(dash_app):
         # 回帰直線を追加
         fig_bar_income.add_trace(
             go.Scatter(
-                x=x,
-                y=y_fit,
+                x=x_extended,
+                y=y_fit_extended,
                 mode='lines',
-                name='線形近似',
+                name='年収予測線',
                 line=dict(color='red', width=2, dash='dash')
+            )
+        )
+        
+        # 来年の予測点を強調表示（オプション）
+        fig_bar_income.add_trace(
+            go.Scatter(
+                x=[next_year],
+                y=[y_next],
+                mode='markers+text',
+                name='来年予測',
+                text=[f"{int(next_year)}年\n予測: {y_next:,.0f}円"],
+                textposition='top center',
+                marker=dict(color='red', size=10, symbol='diamond')
             )
         )
         
@@ -262,8 +284,8 @@ def register_callbacks(dash_app):
             yaxis_title="金額（円）",
             xaxis=dict(
                 tickmode='array',              # 目盛りを手動指定
-                tickvals=sorted(df_bar_income['年'].unique()),  # 年（整数）のみを表示
-                ticktext=[str(y) for y in sorted(df_bar_income['年'].unique())]  # 表示文字列
+                tickvals=sorted(list(x) + [next_year]),  # 年（整数）のみを表示
+                ticktext=[str(y) for y in sorted(list(x) + [next_year])]  # 表示文字列
             )
         )
         
