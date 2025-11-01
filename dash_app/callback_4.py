@@ -1,0 +1,223 @@
+import pandas as pd
+import plotly.express as px
+from dash import Input, Output
+import os, json
+
+CONFIG_FILE = "config.json"
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def register_callbacks(dash_app):
+    @dash_app.callback(
+        Output('year-dropdown', 'options'),
+        Output('year-dropdown', 'value'),
+        Output('expense-category-dropdown', 'options'),
+        Output('expense-category-dropdown', 'value'),
+        Output('expense-subcategory-dropdown', 'options'),
+        Output('expense-subcategory-dropdown', 'value'),
+        Output('expense-graph', 'figure'),
+        Output('expense-category-graph', 'figure'),
+        Output('pie-ex-chart', 'figure'),
+        Output('pie-ex-subchart', 'figure'),
+        Input('year-dropdown', 'value'),
+        Input('month-dropdown', 'value'),
+        Input('expense-category-dropdown', 'value'),
+        Input('expense-subcategory-dropdown', 'value')
+    )
+    def update_graph(selected_year, selected_month, selected_expense_category, selected_expense_subcategory):
+        # --- 最新の設定を取得 ---
+        config = load_config()
+        DATA_DIR = config.get("folder_path")
+
+        # ここから先は通常のデータ読み込み・グラフ生成処理
+        all_dfs = []
+        for file in os.listdir(DATA_DIR):
+            if not file.endswith('.xlsx'):
+                continue
+            path = os.path.join(DATA_DIR, file)
+            df = pd.read_excel(path)
+            if '期間' not in df.columns or '収入/支出' not in df.columns or '金額' not in df.columns:
+                continue
+            df['期間'] = pd.to_datetime(df['期間'], errors='coerce')
+            df.dropna(subset=['期間'], inplace=True)
+            df['年'] = df['期間'].dt.year
+            df['期間_table'] = df['期間'].dt.strftime("%Y/%m/%d")
+            df['期間'] = df['期間'].dt.to_period('M').astype(str)
+            df = df[df['収入/支出'] == '支出']  # ← 収入のみ
+            all_dfs.append(df)
+
+        if not all_dfs:
+            empty_bar = px.bar(title="対象データがありません")
+            empty_line = px.line(title="対象データがありません")
+            empty_pie = px.pie(title="対象データがありません")
+            return ([], None, [], 'all', [], 'all', empty_bar, empty_bar, empty_pie, empty_pie,empty_bar)
+
+        combined_df = pd.concat(all_dfs, ignore_index=True)
+
+        # 以下は既存のグラフ・テーブル生成コードをそのまま使用
+        # 年リスト作成、月・カテゴリフィルタ、棒グラフ、円グラフ、テーブル生成
+        years = sorted(combined_df['年'].unique())
+        year_options = [{'label':'すべて','value':'all'}] + [{'label': str(y), 'value': y} for y in years]
+        if selected_year is None:
+            selected_year = years[-1]
+        
+        if selected_year != 'all':
+            # 特定の年 → その年だけを使う
+            df_filtered = combined_df[combined_df['年'] == selected_year]
+
+            # 月単位のままでもOK
+            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
+
+        else:
+            # すべて選択 → 月単位をまとめて年単位に集約
+            df_filtered = combined_df.copy()
+            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
+
+        if selected_month != 'all':
+            month_str = f"{selected_year}-{int(selected_month):02d}"
+            df_filtered = df_filtered[df_filtered['期間'] == month_str]
+
+        # 収入カテゴリ
+        expense_categories = sorted(df_filtered[df_filtered['収入/支出']=='支出']['分類'].dropna().unique())
+        expense_options = [{'label':'すべて','value':'all'}] + [{'label':c,'value':c} for c in expense_categories]
+        if selected_expense_category not in [c['value'] for c in expense_options]:
+            selected_expense_category = 'all'
+        if selected_expense_category != 'all':
+            df_filtered = df_filtered[df_filtered['分類'] == selected_expense_category]
+
+        # 収入サブカテゴリ
+        expense_subcategories = sorted(df_filtered[df_filtered['収入/支出']=='支出']['小分類'].dropna().unique())
+        expense_suboptions = [{'label':'すべて','value':'all'}] + [{'label':c,'value':c} for c in expense_subcategories]
+        if selected_expense_subcategory not in [c['value'] for c in expense_suboptions]:
+            selected_expense_subcategory = 'all'
+        if selected_expense_subcategory != 'all':
+            df_filtered = df_filtered[df_filtered['小分類'] == selected_expense_subcategory]
+            
+        # --- 年別の折れ線グラフ ---
+        df_line = (
+            combined_df.groupby(['年'], as_index=False)['金額']
+            .sum()
+            .sort_values('年')
+        )
+        
+        # 年ごとの合計金額を計算（ラベル用）
+        df_total = df_line.groupby('年', as_index=False)['金額'].sum()
+        
+        fig_bar = px.line(
+            df_line,
+            x='年',
+            y='金額',
+            title="年別 支出分類の内訳",
+            labels={'金額': '金額（円）', '年': '年'},
+            color_discrete_map={'その他': 'dimgray'} 
+        )
+        fig_bar.update_layout(
+            barmode='stack', 
+            yaxis_tickformat=',', 
+            yaxis_title="金額（円）",
+            xaxis=dict(
+                tickmode='array',              # 目盛りを手動指定
+                tickvals=sorted(df_bar['年'].unique()),  # 年（整数）のみを表示
+                ticktext=[str(y) for y in sorted(df_bar['年'].unique())]  # 表示文字列
+            )
+        )
+        
+        # 各年の合計金額を上部に表示（text）
+        for i, row in df_total.iterrows():
+            fig_bar.add_annotation(
+                x=row['年'],
+                y=row['金額'],
+                text=f"{int(row['金額']):,}円",
+                showarrow=False,
+                font=dict(size=12, color="black"),
+                yshift=10
+            )
+        
+        # 分類別の棒グラフ
+        df_bar_category = df_filtered.groupby(['分類'], as_index=False)['金額'].sum()
+        
+        # 金額の大きい順に並び替え
+        df_bar_category = df_bar_category.sort_values('金額', ascending=False)
+        
+        x = df_bar_category['分類']
+        y = df_bar_category['金額']
+        
+        fig_bar_category = px.bar(
+            df_bar_category,
+            x='分類',
+            y='金額',
+            color='分類',
+            title=f'{selected_year}年 分類別支出金額',
+            color_discrete_map={'その他': 'dimgray'} 
+        )
+        
+        fig_bar_category.update_layout(
+            barmode='stack', 
+            yaxis_tickformat=',', 
+            yaxis_title="金額（円）"
+        )
+        
+        # 分類の円グラフ作成
+        def make_pie(df, title):
+            if df.empty or '分類' not in df.columns:
+                return px.pie(title="対象データがありません")
+            grouped = df.groupby('分類')['金額'].sum().reset_index()
+            non_other = grouped[grouped['分類'] != 'その他'].sort_values('金額', ascending=False)
+            other = grouped[grouped['分類'] == 'その他']
+            grouped = pd.concat([non_other, other])
+            categories = grouped['分類'].tolist()
+            grouped['分類'] = pd.Categorical(grouped['分類'], categories=categories, ordered=True)
+            default_colors = px.colors.qualitative.Plotly
+            color_map = {}
+            j = 0
+            for c in categories:
+                if c == 'その他':
+                    color_map[c] = 'dimgray'
+                else:
+                    color_map[c] = default_colors[j % len(default_colors)]
+                    j += 1
+            fig = px.pie(grouped, names='分類', values='金額', title=title,
+                         category_orders={'分類': categories}, color='分類', color_discrete_map=color_map)
+            fig.update_traces(sort=False, direction='clockwise')
+            return fig
+
+        fig_pie_ex = make_pie(df_filtered[df_filtered['収入/支出']=='支出'], '支出の分類割合')
+        
+        # 小分類の円グラフ作成
+        def make_pie(df, title):
+            if df.empty or '小分類' not in df.columns:
+                return px.pie(title="対象データがありません")
+            # --- 🟢 小分類が空（NaNや空文字）のものを「その他」に置き換え ---
+            df['小分類'] = df['小分類'].replace('', pd.NA)
+            df['小分類'] = df['小分類'].fillna('その他')
+            sub_grouped = df.groupby('小分類')['金額'].sum().reset_index()
+            non_other_sub = sub_grouped[sub_grouped['小分類'] != 'その他'].sort_values('金額', ascending=False)
+            other_sub = sub_grouped[sub_grouped['小分類'] == 'その他']
+            sub_grouped = pd.concat([non_other_sub, other_sub])
+            sub_categories = sub_grouped['小分類'].tolist()
+            sub_grouped['小分類'] = pd.Categorical(sub_grouped['小分類'], categories=sub_categories, ordered=True)
+            default_colors = px.colors.qualitative.Plotly
+            color_map = {}
+            j = 0
+            for c in sub_categories:
+                if c == 'その他':
+                    color_map[c] = 'dimgray'
+                else:
+                    color_map[c] = default_colors[j % len(default_colors)]
+                    j += 1
+            fig = px.pie(sub_grouped, names='小分類', values='金額', title=title,
+                         category_orders={'小分類': sub_categories}, color='小分類', color_discrete_map=color_map)
+            fig.update_traces(sort=False, direction='clockwise')
+            return fig
+
+        df_expense = df_filtered[df_filtered['収入/支出'] == '支出']
+        fig_pie_ex_sub = make_pie(df_expense[df_expense['分類']=='🏠 住居/通信'], '支出の小分類割合')
+        
+        return (year_options, selected_year,
+                expense_options, selected_expense_category,
+                expense_suboptions, selected_expense_subcategory,
+                fig_bar,fig_bar_category, fig_pie_ex, fig_pie_ex_sub)
