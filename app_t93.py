@@ -42,6 +42,10 @@ def asset():
 def income():
     return render_template('income.html')
 
+@app.route('/expense')
+def expense():
+    return render_template('expense_1.html')
+
 @app.route('/setting')
 def setting():
     config = load_config()
