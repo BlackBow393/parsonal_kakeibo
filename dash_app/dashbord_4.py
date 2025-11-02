@@ -51,8 +51,24 @@ def create_dash_app4(flask_app):
             dcc.Graph(id='expense-category-graph', style={'width': '70%'}),
             dcc.Graph(id='pie-ex-chart', style={'width': '30%'})
         ], style={'display': 'flex'}),
-        
-        dcc.Graph(id='pie-ex-subchart')
+        html.Div([
+            dcc.Graph(id='pie-ex-subchart', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart2', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart3', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart4', style={'width': '25%'})
+        ], style={'display': 'flex'}),
+        html.Div([
+            dcc.Graph(id='pie-ex-subchart5', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart6', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart7', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart8', style={'width': '25%'})
+        ], style={'display': 'flex'}),
+        html.Div([
+            dcc.Graph(id='pie-ex-subchart9', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart10', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart11', style={'width': '25%'}),
+            dcc.Graph(id='pie-ex-subchart12', style={'width': '25%'})
+        ], style={'display': 'flex'})
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）
