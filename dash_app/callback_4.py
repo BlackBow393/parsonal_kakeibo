@@ -118,7 +118,7 @@ def register_callbacks(dash_app):
         # 年ごとの合計金額を計算（ラベル用）
         df_total = df_line.groupby('年', as_index=False)['金額'].sum()
         
-        fig_bar = px.line(
+        fig_line = px.line(
             df_line,
             x='年',
             y='金額',
@@ -126,20 +126,20 @@ def register_callbacks(dash_app):
             labels={'金額': '金額（円）', '年': '年'},
             color_discrete_map={'その他': 'dimgray'} 
         )
-        fig_bar.update_layout(
+        fig_line.update_layout(
             barmode='stack', 
             yaxis_tickformat=',', 
             yaxis_title="金額（円）",
             xaxis=dict(
                 tickmode='array',              # 目盛りを手動指定
-                tickvals=sorted(df_bar['年'].unique()),  # 年（整数）のみを表示
-                ticktext=[str(y) for y in sorted(df_bar['年'].unique())]  # 表示文字列
+                tickvals=sorted(df_line['年'].unique()),  # 年（整数）のみを表示
+                ticktext=[str(y) for y in sorted(df_line['年'].unique())]  # 表示文字列
             )
         )
         
         # 各年の合計金額を上部に表示（text）
         for i, row in df_total.iterrows():
-            fig_bar.add_annotation(
+            fig_line.add_annotation(
                 x=row['年'],
                 y=row['金額'],
                 text=f"{int(row['金額']):,}円",
@@ -157,12 +157,18 @@ def register_callbacks(dash_app):
         x = df_bar_category['分類']
         y = df_bar_category['金額']
         
+        # タイトルを条件で切り替える
+        if selected_year == 'all':
+            title_text_bar = '全年 分類別支出金額'
+        else:
+            title_text_bar = f'{selected_year}年 分類別支出金額'
+        
         fig_bar_category = px.bar(
             df_bar_category,
             x='分類',
             y='金額',
             color='分類',
-            title=f'{selected_year}年 分類別支出金額',
+            title=title_text_bar,
             color_discrete_map={'その他': 'dimgray'} 
         )
         
@@ -306,7 +312,7 @@ def register_callbacks(dash_app):
         return (year_options, selected_year,
                 expense_options, selected_expense_category,
                 expense_suboptions, selected_expense_subcategory,
-                fig_bar,fig_bar_category, fig_pie_ex, fig_pie_ex_sub,
+                fig_line,fig_bar_category, fig_pie_ex, fig_pie_ex_sub,
                 fig_pie_ex_sub2, fig_pie_ex_sub3, fig_pie_ex_sub4, fig_pie_ex_sub5, fig_pie_ex_sub6,
                 fig_pie_ex_sub7, fig_pie_ex_sub8, fig_pie_ex_sub9, fig_pie_ex_sub10, fig_pie_ex_sub11,
                 fig_pie_ex_sub12)
