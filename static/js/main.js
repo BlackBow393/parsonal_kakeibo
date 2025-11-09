@@ -52,3 +52,19 @@ function closeSidebar() {
     // スクロール復活
     document.body.style.overflow = "";
 }
+
+window.addEventListener("DOMContentLoaded", function() {
+    const iframe = document.getElementById("analysis-frame");
+    const overlay = document.getElementById("loading-overlay");
+
+    // iframe が完全に読み込まれたらオーバーレイを消す
+    iframe.addEventListener("load", function() {
+        overlay.style.transition = "opacity 0.5s ease";
+        overlay.style.opacity = "0";
+
+        // 完全に透明になった後で display: none に
+        setTimeout(() => {
+            overlay.style.display = "none";
+        }, 500);
+    });
+});
