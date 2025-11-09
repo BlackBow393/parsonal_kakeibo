@@ -29,7 +29,7 @@ footer .footer_item {
     left: 0;
     background-color: #111;
     overflow-x: hidden;
-    transition: 0.3s;
+    transition: width 0.3s ease; /* ← サイドバーは左からスライドイン */
     padding-top: 80px;
 }
 
@@ -39,8 +39,21 @@ footer .footer_item {
     font-size: 24px;
     color: #f1f1f1;
     display: block;
-    transition: 0.2s;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
+
+/* アクティブ時（サイドバー開いたあと） */
+.sidebar.show a {
+    opacity: 1;
+}
+
+/* ▼ 順番にフェードイン（遅延付き） */
+.sidebar.show a:nth-child(1) { transition-delay: 0.2s; }
+.sidebar.show a:nth-child(2) { transition-delay: 0.3s; }
+.sidebar.show a:nth-child(3) { transition-delay: 0.4s; }
+.sidebar.show a:nth-child(4) { transition-delay: 0.5s; }
+.sidebar.show a:nth-child(5) { transition-delay: 0.6s; }
 
 .sidebar a:hover {
     background-color: #575757;
