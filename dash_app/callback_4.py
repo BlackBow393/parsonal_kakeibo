@@ -22,18 +22,7 @@ def register_callbacks(dash_app):
         Output('expense-graph', 'figure'),
         Output('expense-category-graph', 'figure'),
         Output('pie-ex-chart', 'figure'),
-        Output('pie-ex-subchart', 'figure'),
-        Output('pie-ex-subchart2', 'figure'),
-        Output('pie-ex-subchart3', 'figure'),
-        Output('pie-ex-subchart4', 'figure'),
-        Output('pie-ex-subchart5', 'figure'),
-        Output('pie-ex-subchart6', 'figure'),
-        Output('pie-ex-subchart7', 'figure'),
-        Output('pie-ex-subchart8', 'figure'),
-        Output('pie-ex-subchart9', 'figure'),
-        Output('pie-ex-subchart10', 'figure'),
-        Output('pie-ex-subchart11', 'figure'),
-        Output('pie-ex-subchart12', 'figure'),
+        Output('expense-frequency-graph', 'figure'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('expense-category-dropdown', 'value'),
@@ -65,7 +54,8 @@ def register_callbacks(dash_app):
             empty_bar = px.bar(title="対象データがありません")
             empty_line = px.line(title="対象データがありません")
             empty_pie = px.pie(title="対象データがありません")
-            return ([], None, [], 'all', [], 'all', empty_line, empty_bar, empty_pie, empty_pie,empty_pie)
+            empty_scatter = px.scatter(title="対象データがありません")
+            return ([], None, [], 'all', [], 'all', empty_line, empty_bar, empty_pie, empty_scatter)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
 
@@ -128,7 +118,7 @@ def register_callbacks(dash_app):
         )
         fig_line.update_layout(
             barmode='stack', 
-            yaxis_tickformat=',', 
+            yaxis=dict(tickformat=',', tickprefix='￥'),
             yaxis_title="金額（円）",
             xaxis=dict(
                 tickmode='array',              # 目盛りを手動指定
@@ -174,7 +164,7 @@ def register_callbacks(dash_app):
         
         fig_bar_category.update_layout(
             barmode='stack', 
-            yaxis_tickformat=',', 
+            yaxis=dict(tickformat=',', tickprefix='￥'),
             yaxis_title="金額（円）"
         )
         
@@ -201,11 +191,9 @@ def register_callbacks(dash_app):
                          category_orders={'分類': categories}, color='分類', color_discrete_map=color_map)
             fig.update_traces(sort=False, direction='clockwise')
             return fig
-
-        fig_pie_ex = make_pie(df_filtered[df_filtered['収入/支出']=='支出'], '支出の分類割合')
         
         # 小分類の円グラフ作成
-        def make_pie(df, title):
+        def make_pie_sub(df, title):
             if df.empty or '小分類' not in df.columns:
                 return px.pie(title="対象データがありません")
             # --- 🟢 小分類が空（NaNや空文字）のものを「その他」に置き換え ---
@@ -232,87 +220,53 @@ def register_callbacks(dash_app):
             return fig
 
         df_expense = df_filtered[df_filtered['収入/支出'] == '支出']
-        # --- リストが空でない場合に最初の分類を選択 ---
-        if expense_categories:
-            first_category = expense_categories[1]
-            category_2 = expense_categories[2]
-            category_3 = expense_categories[3]
-            category_4 = expense_categories[4]
-            category_5 = expense_categories[5]
-            category_6 = expense_categories[6]
-            category_7 = expense_categories[7]
-            category_8 = expense_categories[8]
-            category_9 = expense_categories[9]
-            category_10 = expense_categories[10]
-            category_11 = expense_categories[11]
-            category_12 = expense_categories[0]
-            df_expense = df_filtered[df_filtered['収入/支出'] == '支出']
-            fig_pie_ex_sub = make_pie(
-                df_expense[df_expense['分類'] == first_category],
-                f"{first_category} の小分類割合"
-            )
-            fig_pie_ex_sub2 = make_pie(
-                df_expense[df_expense['分類'] == category_2],
-                f"{category_2} の小分類割合"
-            )
-            fig_pie_ex_sub3 = make_pie(
-                df_expense[df_expense['分類'] == category_3],
-                f"{category_3} の小分類割合"
-            )
-            fig_pie_ex_sub4 = make_pie(
-                df_expense[df_expense['分類'] == category_4],
-                f"{category_4} の小分類割合"
-            )
-            fig_pie_ex_sub5 = make_pie(
-                df_expense[df_expense['分類'] == category_5],
-                f"{category_5} の小分類割合"
-            )
-            fig_pie_ex_sub6 = make_pie(
-                df_expense[df_expense['分類'] == category_6],
-                f"{category_6} の小分類割合"
-            )
-            fig_pie_ex_sub7 = make_pie(
-                df_expense[df_expense['分類'] == category_7],
-                f"{category_7} の小分類割合"
-            )
-            fig_pie_ex_sub8 = make_pie(
-                df_expense[df_expense['分類'] == category_8],
-                f"{category_8} の小分類割合"
-            )
-            fig_pie_ex_sub9 = make_pie(
-                df_expense[df_expense['分類'] == category_9],
-                f"{category_9} の小分類割合"
-            )
-            fig_pie_ex_sub10 = make_pie(
-                df_expense[df_expense['分類'] == category_10],
-                f"{category_10} の小分類割合"
-            )
-            fig_pie_ex_sub11 = make_pie(
-                df_expense[df_expense['分類'] == category_11],
-                f"{category_11} の小分類割合"
-            )
-            fig_pie_ex_sub12 = make_pie(
-                df_expense[df_expense['分類'] == category_12],
-                f"{category_12} の小分類割合"
-            )
+        
+        if selected_expense_category == 'all':
+            # 分類ごとの円グラフを描画
+            fig_pie_ex = make_pie(df_expense, '支出の分類割合')
         else:
-            fig_pie_ex_sub = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub2 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub3 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub4 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub5 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub6 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub7 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub8 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub9 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub10 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub11 = px.pie(title="支出分類が見つかりません")
-            fig_pie_ex_sub12 = px.pie(title="支出分類が見つかりません")
+            # 特定分類 → 小分類の円グラフを描画
+            df_selected = df_expense[df_expense['分類'] == selected_expense_category]
+            fig_pie_ex = make_pie_sub(df_selected, f"{selected_expense_category} の小分類割合")
+            
+        # 支出金額と頻度の散布図作成
+        
+        df_scatter = (
+            df_expense
+            .groupby('内容', as_index=False)
+            .agg(
+                回数=('金額', 'count'),
+                合計金額=('金額', 'sum')
+            )
+        )
+        
+        fig_scatter = px.scatter(
+            df_scatter,
+            x='回数',
+            y='合計金額',
+            size='合計金額',
+            color='内容',
+            title='支出金額と発生回数の関係',
+            hover_name='内容'
+        )
+
+        # 見た目の微調整
+        fig_scatter.update_traces(
+            marker=dict(opacity=0.7, line=dict(width=1, color='DarkSlateGrey')),
+            hovertemplate=(
+                '内容: %{hovertext}<br>' +
+                '回数: %{x:,}回<br>' +
+                '合計金額: %{y:,}円<br>' +
+                '<extra></extra>'
+            )
+        )
+        fig_scatter.update_layout(
+            xaxis_title='回数', 
+            yaxis=dict(tickformat=',', tickprefix='￥'),
+            yaxis_title='金額（円）'
+        )
         
         return (year_options, selected_year,
                 expense_options, selected_expense_category,
                 expense_suboptions, selected_expense_subcategory,
-                fig_line,fig_bar_category, fig_pie_ex, fig_pie_ex_sub,
-                fig_pie_ex_sub2, fig_pie_ex_sub3, fig_pie_ex_sub4, fig_pie_ex_sub5, fig_pie_ex_sub6,
-                fig_pie_ex_sub7, fig_pie_ex_sub8, fig_pie_ex_sub9, fig_pie_ex_sub10, fig_pie_ex_sub11,
-                fig_pie_ex_sub12)
+                fig_line,fig_bar_category, fig_pie_ex, fig_scatter)

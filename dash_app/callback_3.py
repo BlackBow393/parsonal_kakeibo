@@ -117,7 +117,7 @@ def register_callbacks(dash_app):
         )
         fig_bar.update_layout(
             barmode='stack', 
-            yaxis_tickformat=',', 
+            yaxis=dict(tickformat=',', tickprefix='￥'),
             yaxis_title="金額（円）",
             xaxis=dict(
                 tickmode='array',              # 目盛りを手動指定
@@ -144,12 +144,18 @@ def register_callbacks(dash_app):
             .sort_values('期間')
         )
 
+        # タイトルを条件で切り替える
+        if selected_year == 'all':
+            title_text_line = '全年 分類別収入金額'
+        else:
+            title_text_line = f'{selected_year}年 分類別収入金額'
+
         fig_line = px.line(
             monthly,
             x='期間',  # ← datetimeのまま
             y='金額',
             markers=True,
-            title=f'{selected_year}年の月別収入推移'
+            title=title_text_line
         )
 
         # update_layoutで年月表示や通貨表記を設定
@@ -280,7 +286,7 @@ def register_callbacks(dash_app):
         
         fig_bar_income.update_layout(
             barmode='stack', 
-            yaxis_tickformat=',', 
+            yaxis=dict(tickformat=',', tickprefix='￥'),
             yaxis_title="金額（円）",
             xaxis=dict(
                 tickmode='array',              # 目盛りを手動指定
