@@ -255,7 +255,7 @@ def register_callbacks(dash_app):
             x='年',
             y='金額',
             color='分類',
-            title="年収推移",
+            title="手取り推移",
             labels={'金額': '金額（円）', '年': '年'},
             color_discrete_map={'💰 給料': 'cornflowerblue'} 
         )

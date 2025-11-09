@@ -112,7 +112,7 @@ def register_callbacks(dash_app):
             df_line,
             x='年',
             y='金額',
-            title="年別 支出分類の内訳",
+            title="支出金額推移",
             labels={'金額': '金額（円）', '年': '年'},
             color_discrete_map={'その他': 'dimgray'} 
         )
