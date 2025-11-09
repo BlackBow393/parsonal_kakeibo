@@ -47,41 +47,48 @@ def create_dash_app(flask_app):
             ], style={'margin-right': '20px'})
         ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
         
-        dcc.Graph(id='excel-graph'),
-        html.Div([
-            dcc.Graph(id='pie-in-chart', style={'width': '50%'}),
-            dcc.Graph(id='pie-out-chart', style={'width': '50%'})
-        ], style={'display': 'flex'}),
-        
-        html.Div([
-            # 収入テーブル
-            html.Div([
-                dash_table.DataTable(
-                    id='income-table', columns=[], data=[],
-                    page_action='none', fixed_rows={'headers': True},
-                    style_table={'height': '500px', 'overflowY': 'auto', 'overflowX': 'auto', 'width': '100%'},
-                    style_cell={'textAlign': 'left', 'minWidth': '100px', 'width': 'auto'},
-                    style_header_conditional=[
-                        {'if': {'column_id': c}, 'backgroundColor': 'cornflowerblue', 'color': 'white'}
-                        for c in ['金額','期間_table','資産','分類','小分類','内容','メモ']
-                    ]
-                )
-            ], style={'width': '50%', 'padding-right': '5px'}),
+        # Loadingを有効化するためにラップ
+        dcc.Loading(
+            id="loading-graphs",
+            type="circle",
+            children=html.Div([
+                dcc.Graph(id='excel-graph'),
+                html.Div([
+                    dcc.Graph(id='pie-in-chart', style={'width': '50%'}),
+                    dcc.Graph(id='pie-out-chart', style={'width': '50%'})
+                ], style={'display': 'flex'}),
+                
+                html.Div([
+                    # 収入テーブル
+                    html.Div([
+                        dash_table.DataTable(
+                            id='income-table', columns=[], data=[],
+                            page_action='none', fixed_rows={'headers': True},
+                            style_table={'height': '500px', 'overflowY': 'auto', 'overflowX': 'auto', 'width': '100%'},
+                            style_cell={'textAlign': 'left', 'minWidth': '100px', 'width': 'auto'},
+                            style_header_conditional=[
+                                {'if': {'column_id': c}, 'backgroundColor': 'cornflowerblue', 'color': 'white'}
+                                for c in ['金額','期間_table','資産','分類','小分類','内容','メモ']
+                            ]
+                        )
+                    ], style={'width': '50%', 'padding-right': '5px'}),
 
-            # 支出テーブル
-            html.Div([
-                dash_table.DataTable(
-                    id='expenses-table', columns=[], data=[],
-                    page_action='none', fixed_rows={'headers': True},
-                    style_table={'height': '500px', 'overflowY': 'auto', 'overflowX': 'auto', 'width': '100%'},
-                    style_cell={'textAlign': 'left', 'minWidth': '100px', 'width': 'auto'},
-                    style_header_conditional=[
-                        {'if': {'column_id': c}, 'backgroundColor': 'tomato', 'color': 'white'}
-                        for c in ['金額','期間_table','資産','分類','小分類','内容','メモ']
-                    ]
-                )
-            ], style={'width': '50%', 'padding-left': '5px'})
-        ], style={'display': 'flex', 'gap': '0px'})
+                    # 支出テーブル
+                    html.Div([
+                        dash_table.DataTable(
+                            id='expenses-table', columns=[], data=[],
+                            page_action='none', fixed_rows={'headers': True},
+                            style_table={'height': '500px', 'overflowY': 'auto', 'overflowX': 'auto', 'width': '100%'},
+                            style_cell={'textAlign': 'left', 'minWidth': '100px', 'width': 'auto'},
+                            style_header_conditional=[
+                                {'if': {'column_id': c}, 'backgroundColor': 'tomato', 'color': 'white'}
+                                for c in ['金額','期間_table','資産','分類','小分類','内容','メモ']
+                            ]
+                        )
+                    ], style={'width': '50%', 'padding-left': '5px'})
+                ], style={'display': 'flex', 'gap': '0px'})
+            ])
+        )
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）

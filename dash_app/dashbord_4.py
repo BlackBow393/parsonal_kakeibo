@@ -46,12 +46,19 @@ def create_dash_app4(flask_app):
             ], style={'margin-right': '20px'})
         ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
         
-        dcc.Graph(id='expense-graph'),
-        html.Div([
-            dcc.Graph(id='expense-category-graph', style={'width': '70%'}),
-            dcc.Graph(id='pie-ex-chart', style={'width': '30%'})
-        ], style={'display': 'flex'}),
-        dcc.Graph(id='expense-frequency-graph')
+        # Loadingを有効化するためにラップ
+        dcc.Loading(
+            id="loading-graphs",
+            type="circle",
+            children=html.Div([
+                dcc.Graph(id='expense-graph'),
+                html.Div([
+                    dcc.Graph(id='expense-category-graph', style={'width': '70%'}),
+                    dcc.Graph(id='pie-ex-chart', style={'width': '30%'})
+                ], style={'display': 'flex'}),
+                dcc.Graph(id='expense-frequency-graph')
+            ])
+        )
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）
