@@ -46,7 +46,8 @@ def register_callbacks(dash_app):
             df['期間_table'] = df['期間'].dt.strftime("%Y/%m/%d")
             df['期間'] = df['期間'].dt.to_period('M').astype(str)
             df = df[df['収入/支出'] == '支出']  # ← 収入のみ
-            df = df[df['分類'] == '🚖 交通/車']  # ← 車交通のみ
+            target_categories = ['🍜 食費', '🛒 スーパー/コンビニ', '🪑 生活用品']
+            df = df[df['分類'].isin(target_categories)]
             all_dfs.append(df)
 
         if not all_dfs:
@@ -54,7 +55,7 @@ def register_callbacks(dash_app):
             empty_line = px.line(title="対象データがありません")
             empty_pie = px.pie(title="対象データがありません")
             empty_scatter = px.scatter(title="対象データがありません")
-            return ([], None, [], 'all', [], 'all', empty_line, empty_bar)
+            return ([], None, [], 'all', [], 'all', empty_line)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
 
@@ -83,8 +84,11 @@ def register_callbacks(dash_app):
 
         # 収入カテゴリ
         expense_categories = sorted(df_filtered[df_filtered['収入/支出']=='支出']['分類'].dropna().unique())
-        expense_options = [{'label':c,'value':c} for c in expense_categories]
-        selected_expense_category = '🚖 交通/車'
+        expense_options = [{'label':'すべて','value':'all'}] + [{'label':c,'value':c} for c in expense_categories]
+        if selected_expense_category not in [c['value'] for c in expense_options]:
+            selected_expense_category = 'all'
+        if selected_expense_category != 'all':
+            df_filtered = df_filtered[df_filtered['分類'] == selected_expense_category]
 
         # 収入サブカテゴリ
         expense_subcategories = sorted(df_filtered[df_filtered['収入/支出']=='支出']['小分類'].dropna().unique())

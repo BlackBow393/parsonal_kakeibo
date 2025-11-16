@@ -1,17 +1,17 @@
 from dash import Dash, dcc, html
-from dash_app.callback_4_2 import register_callbacks  # コールバックをインポート
+from dash_app.callback_4_1 import register_callbacks  # コールバックをインポート
 
-def create_dash_app4_2(flask_app):
+def create_dash_app4_1(flask_app):
     dash_app = Dash(
         __name__,
         server=flask_app,
-        url_base_pathname='/dash4-2/',
+        url_base_pathname='/dash4-1/',
         assets_folder="assets"
     )
 
     # 保存先が設定されている場合は、レイアウトを作成（コールバックで最新設定を参照）
     dash_app.layout = html.Div([
-        html.H2("交通/車の分析ダッシュボード"),
+        html.H2("食費と生活用品の分析ダッシュボード"),
         
         html.Div([
             html.Div([
