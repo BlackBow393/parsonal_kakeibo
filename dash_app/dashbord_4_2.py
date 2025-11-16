@@ -51,8 +51,9 @@ def create_dash_app4_2(flask_app):
             id="loading-graphs",
             type="circle",
             children=html.Div([
-                dcc.Graph(id='expense-graph'),
-                dcc.Graph(id='expense-subcategory-graph')
+                dcc.Graph(id='expense-subcategory-graph'),
+                dcc.Graph(id='refueling-graph1'),
+                dcc.Graph(id='refueling-graph2')
             ])
         )
     ])

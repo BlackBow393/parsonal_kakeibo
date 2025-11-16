@@ -58,6 +58,7 @@ def register_callbacks(dash_app):
             return ([], None, [], 'all', [], 'all', empty_line, empty_bar, empty_pie, empty_scatter)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
+        df_category_only = combined_df.copy()
 
         # 以下は既存のグラフ・テーブル生成コードをそのまま使用
         # 年リスト作成、月・カテゴリフィルタ、棒グラフ、円グラフ、テーブル生成
@@ -70,13 +71,9 @@ def register_callbacks(dash_app):
             # 特定の年 → その年だけを使う
             df_filtered = combined_df[combined_df['年'] == selected_year]
 
-            # 月単位のままでもOK
-            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
-
         else:
             # すべて選択 → 月単位をまとめて年単位に集約
             df_filtered = combined_df.copy()
-            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
 
         if selected_month != 'all':
             month_str = f"{selected_year}-{int(selected_month):02d}"
@@ -89,6 +86,7 @@ def register_callbacks(dash_app):
             selected_expense_category = 'all'
         if selected_expense_category != 'all':
             df_filtered = df_filtered[df_filtered['分類'] == selected_expense_category]
+            df_category_only = df_category_only[df_category_only['分類'] == selected_expense_category]
 
         # 収入サブカテゴリ
         expense_subcategories = sorted(df_filtered[df_filtered['収入/支出']=='支出']['小分類'].dropna().unique())
@@ -97,10 +95,11 @@ def register_callbacks(dash_app):
             selected_expense_subcategory = 'all'
         if selected_expense_subcategory != 'all':
             df_filtered = df_filtered[df_filtered['小分類'] == selected_expense_subcategory]
+            df_category_only = df_category_only[df_category_only['小分類'] == selected_expense_subcategory]
             
         # --- 年別の折れ線グラフ ---
         df_line = (
-            combined_df.groupby(['年'], as_index=False)['金額']
+            df_category_only.groupby(['年'], as_index=False)['金額']
             .sum()
             .sort_values('年')
         )
@@ -118,7 +117,7 @@ def register_callbacks(dash_app):
         )
         fig_line.update_layout(
             barmode='stack', 
-            yaxis=dict(tickformat=',', tickprefix='￥'),
+            yaxis=dict(tickformat=',', tickprefix='￥', rangemode='tozero'),
             yaxis_title="金額（円）",
             xaxis=dict(
                 tickmode='array',              # 目盛りを手動指定

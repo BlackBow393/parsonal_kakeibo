@@ -19,8 +19,9 @@ def register_callbacks(dash_app):
         Output('expense-category-dropdown', 'value'),
         Output('expense-subcategory-dropdown', 'options'),
         Output('expense-subcategory-dropdown', 'value'),
-        Output('expense-graph', 'figure'),
         Output('expense-subcategory-graph', 'figure'),
+        Output('refueling-graph1', 'figure'),
+        Output('refueling-graph2', 'figure'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('expense-category-dropdown', 'value'),
@@ -54,7 +55,7 @@ def register_callbacks(dash_app):
             empty_line = px.line(title="対象データがありません")
             empty_pie = px.pie(title="対象データがありません")
             empty_scatter = px.scatter(title="対象データがありません")
-            return ([], None, [], 'all', [], 'all', empty_line, empty_bar)
+            return ([], None, [], 'all', [], 'all', empty_bar, empty_bar, empty_bar)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
 
@@ -69,13 +70,9 @@ def register_callbacks(dash_app):
             # 特定の年 → その年だけを使う
             df_filtered = combined_df[combined_df['年'] == selected_year]
 
-            # 月単位のままでもOK
-            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
-
         else:
             # すべて選択 → 月単位をまとめて年単位に集約
             df_filtered = combined_df.copy()
-            df_bar = df_filtered.groupby(['年', '分類'], as_index=False)['金額'].sum()
 
         if selected_month != 'all':
             month_str = f"{selected_year}-{int(selected_month):02d}"
@@ -93,46 +90,6 @@ def register_callbacks(dash_app):
             selected_expense_subcategory = 'all'
         if selected_expense_subcategory != 'all':
             df_filtered = df_filtered[df_filtered['小分類'] == selected_expense_subcategory]
-            
-        # --- 年別の折れ線グラフ ---
-        df_line = (
-            combined_df.groupby(['年'], as_index=False)['金額']
-            .sum()
-            .sort_values('年')
-        )
-        
-        # 年ごとの合計金額を計算（ラベル用）
-        df_total = df_line.groupby('年', as_index=False)['金額'].sum()
-        
-        fig_line = px.line(
-            df_line,
-            x='年',
-            y='金額',
-            title="支出金額推移",
-            labels={'金額': '金額（円）', '年': '年'},
-            color_discrete_map={'その他': 'dimgray'} 
-        )
-        fig_line.update_layout(
-            barmode='stack', 
-            yaxis=dict(tickformat=',', tickprefix='￥'),
-            yaxis_title="金額（円）",
-            xaxis=dict(
-                tickmode='array',              # 目盛りを手動指定
-                tickvals=sorted(df_line['年'].unique()),  # 年（整数）のみを表示
-                ticktext=[str(y) for y in sorted(df_line['年'].unique())]  # 表示文字列
-            )
-        )
-        
-        # 各年の合計金額を上部に表示（text）
-        for i, row in df_total.iterrows():
-            fig_line.add_annotation(
-                x=row['年'],
-                y=row['金額'],
-                text=f"{int(row['金額']):,}円",
-                showarrow=False,
-                font=dict(size=12, color="black"),
-                yshift=10
-            )
             
         # 分類別の棒グラフ
         df_bar_subcategory = df_filtered.groupby(['小分類'], as_index=False)['金額'].sum()
@@ -164,7 +121,76 @@ def register_callbacks(dash_app):
             yaxis_title="金額（円）"
         )
         
+        # --- 内容別の給油の分類の棒グラフ ---
+        refueling_subcategory = '⛽️ガソリン'
+        df_refueling = df_filtered[df_filtered['小分類'] == refueling_subcategory]
+        # 件数（count）と平均値（mean）も集計
+        df_bar_refueling = (
+            df_refueling
+            .groupby(['内容'], as_index=False)
+            .agg(
+                金額合計=('金額', 'sum'),
+                件数=('金額', 'count'),
+                平均金額=('金額', 'mean')
+            )
+        )
+        df_bar_refueling = df_bar_refueling.sort_values('金額合計', ascending=False)
+        
+        # タイトルを条件で切り替える
+        if selected_year == 'all':
+            title_text_bar2 = '全年 給油金額'
+        else:
+            title_text_bar2 = f'{selected_year}年 給油金額'
+            
+        fig_bar_refueling = px.bar(
+            df_bar_refueling,
+            x='内容',
+            y='金額合計',
+            color='内容',
+            title=title_text_bar2,
+            hover_data={
+                '件数': True,
+                '平均金額': ':.0f',  # 小数なし
+                '金額合計': ':.0f'
+            },
+            color_discrete_map={'その他': 'dimgray'} 
+        )
+        
+        fig_bar_refueling.update_layout(
+            barmode='stack', 
+            yaxis=dict(tickformat=',', tickprefix='￥'),
+            yaxis_title="金額（円）"
+        )
+        
+        df_bar_refueling_count = df_bar_refueling.sort_values('件数', ascending=False)
+        
+        # タイトルを条件で切り替える
+        if selected_year == 'all':
+            title_text_bar3 = '全年 給油回数'
+        else:
+            title_text_bar3 = f'{selected_year}年 給油回数'
+        
+        fig_bar_refueling_count = px.bar(
+            df_bar_refueling_count,
+            x='内容',
+            y='件数',
+            color='内容',
+            title=title_text_bar3,
+            hover_data={
+                '件数': True,
+                '平均金額': ':.0f',  # 小数なし
+                '金額合計': ':.0f'
+            },
+            color_discrete_map={'その他': 'dimgray'} 
+        )
+        
+        fig_bar_refueling_count.update_layout(
+            barmode='stack', 
+            yaxis=dict(tickformat=','),
+            yaxis_title="給油回数（回）"
+        )
+        
         return (year_options, selected_year,
                 expense_options, selected_expense_category,
                 expense_suboptions, selected_expense_subcategory,
-                fig_line,fig_bar_subcategory)
+                fig_bar_subcategory,fig_bar_refueling,fig_bar_refueling_count)
