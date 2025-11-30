@@ -159,7 +159,8 @@ def register_callbacks(dash_app):
         fig_bar_refueling.update_layout(
             barmode='stack', 
             yaxis=dict(tickformat=',', tickprefix='￥'),
-            yaxis_title="金額（円）"
+            yaxis_title="金額（円）",
+            showlegend=False
         )
         
         df_bar_refueling_count = df_bar_refueling.sort_values('件数', ascending=False)
@@ -187,7 +188,8 @@ def register_callbacks(dash_app):
         fig_bar_refueling_count.update_layout(
             barmode='stack', 
             yaxis=dict(tickformat=','),
-            yaxis_title="給油回数（回）"
+            yaxis_title="給油回数（回）",
+            showlegend=False
         )
         
         return (year_options, selected_year,

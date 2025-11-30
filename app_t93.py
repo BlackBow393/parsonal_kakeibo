@@ -50,7 +50,7 @@ def income():
 
 @app.route('/expense')
 def expense():
-    return render_template('expense_1.html')
+    return render_template('expense.html')
 
 @app.route('/setting')
 def setting():

@@ -164,7 +164,8 @@ def register_callbacks(dash_app):
         fig_bar_category.update_layout(
             barmode='stack', 
             yaxis=dict(tickformat=',', tickprefix='￥'),
-            yaxis_title="金額（円）"
+            yaxis_title="金額（円）",
+            showlegend=False
         )
         
         # 分類の円グラフ作成

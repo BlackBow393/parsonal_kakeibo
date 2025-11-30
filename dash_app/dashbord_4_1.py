@@ -52,7 +52,11 @@ def create_dash_app4_1(flask_app):
             type="circle",
             children=html.Div([
                 dcc.Graph(id='expense-graph'),
-                dcc.Graph(id='expense-subcategory-graph')
+                dcc.Graph(id='expense-subcategory-graph'),
+                html.Div([
+                    dcc.Graph(id='expense-pareto-graph', style={'width': '70%'}),
+                    dcc.Graph(id='count-pareto-graph', style={'width': '70%'})
+                ], style={'display': 'flex'})
             ])
         )
     ])

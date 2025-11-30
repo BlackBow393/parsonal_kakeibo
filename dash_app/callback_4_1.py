@@ -21,6 +21,8 @@ def register_callbacks(dash_app):
         Output('expense-subcategory-dropdown', 'value'),
         Output('expense-graph', 'figure'),
         Output('expense-subcategory-graph', 'figure'),
+        Output('expense-pareto-graph', 'figure'),
+        Output('count-pareto-graph', 'figure'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('expense-category-dropdown', 'value'),
@@ -55,7 +57,7 @@ def register_callbacks(dash_app):
             empty_line = px.line(title="対象データがありません")
             empty_pie = px.pie(title="対象データがありません")
             empty_scatter = px.scatter(title="対象データがありません")
-            return ([], None, [], 'all', [], 'all', empty_line)
+            return ([], None, [], 'all', [], 'all', empty_line,empty_bar,empty_bar)
 
         combined_df = pd.concat(all_dfs, ignore_index=True)
 
@@ -118,7 +120,7 @@ def register_callbacks(dash_app):
         )
         fig_line.update_layout(
             barmode='stack', 
-            yaxis=dict(tickformat=',', tickprefix='￥'),
+            yaxis=dict(tickformat=',', tickprefix='￥', rangemode='tozero'),
             yaxis_title="金額（円）",
             xaxis=dict(
                 tickmode='array',              # 目盛りを手動指定
@@ -165,10 +167,71 @@ def register_callbacks(dash_app):
         fig_bar_subcategory.update_layout(
             barmode='stack', 
             yaxis=dict(tickformat=',', tickprefix='￥'),
-            yaxis_title="金額（円）"
+            yaxis_title="金額（円）",
+            showlegend=False
+        )
+        
+        # 内容別の棒グラフ
+        df_bar_pareto = (
+            df_filtered.groupby(['内容'], as_index=False)
+            .agg(
+                合計金額=('金額','sum'),
+                件数=('金額', 'count'),
+                平均金額=('金額', 'mean')
+            )
+        )
+        
+        # 金額順のパレート図
+        df_bar_pareto_value = df_bar_pareto.sort_values('合計金額', ascending=False).head(10)
+        
+        # タイトルを条件で切り替える
+        if selected_year == 'all':
+            title_text_bar = '全年 内容別支出金額上位１０位'
+        else:
+            title_text_bar = f'{selected_year}年 内容別支出金額上位１０位'
+        
+        fig_bar_pareto_value = px.bar(
+            df_bar_pareto_value,
+            x='内容',
+            y='合計金額',
+            color='内容',
+            title=title_text_bar,
+            color_discrete_map={'その他': 'dimgray'} 
+        )
+        
+        fig_bar_pareto_value.update_layout(
+            barmode='stack', 
+            yaxis=dict(tickformat=',', tickprefix='￥'),
+            yaxis_title="金額（円）",
+            showlegend=False
+        )
+        
+        # 件数順のパレート図
+        df_bar_pareto_count = df_bar_pareto.sort_values('件数', ascending=False).head(10)
+        
+        # タイトルを条件で切り替える
+        if selected_year == 'all':
+            title_text_bar = '全年 内容別支出件数上位１０位'
+        else:
+            title_text_bar = f'{selected_year}年 内容別支出件数上位１０位'
+        
+        fig_bar_pareto_count = px.bar(
+            df_bar_pareto_count,
+            x='内容',
+            y='件数',
+            color='内容',
+            title=title_text_bar,
+            color_discrete_map={'その他': 'dimgray'} 
+        )
+        
+        fig_bar_pareto_count.update_layout(
+            barmode='stack', 
+            yaxis=dict(tickformat=','),
+            yaxis_title="件数（回）",
+            showlegend=False
         )
         
         return (year_options, selected_year,
                 expense_options, selected_expense_category,
                 expense_suboptions, selected_expense_subcategory,
-                fig_line,fig_bar_subcategory)
+                fig_line,fig_bar_subcategory,fig_bar_pareto_value,fig_bar_pareto_count)
