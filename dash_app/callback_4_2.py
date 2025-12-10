@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from dash import Input, Output
 import os, json
 
@@ -21,7 +22,7 @@ def register_callbacks(dash_app):
         Output('expense-subcategory-dropdown', 'value'),
         Output('expense-subcategory-graph', 'figure'),
         Output('refueling-graph1', 'figure'),
-        Output('refueling-graph2', 'figure'),
+        Output('count-pareto-graph', 'figure'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('expense-category-dropdown', 'value'),
@@ -138,61 +139,79 @@ def register_callbacks(dash_app):
         
         # タイトルを条件で切り替える
         if selected_year == 'all':
-            title_text_bar2 = '全年 給油金額'
+            title_text_bar2 = '全年 給油金額と回数'
         else:
-            title_text_bar2 = f'{selected_year}年 給油金額'
+            title_text_bar2 = f'{selected_year}年 給油金額と回数'
             
-        fig_bar_refueling = px.bar(
+        # --- 棒グラフ（給油金額） ---
+        fig_bar_mix = px.bar(
             df_bar_refueling,
             x='内容',
-            y='金額合計',
-            color='内容',
+            y='金額合計', 
             title=title_text_bar2,
+            color='内容',
             hover_data={
                 '件数': True,
-                '平均金額': ':.0f',  # 小数なし
+                '平均金額': ':.0f',
                 '金額合計': ':.0f'
             },
+            color_discrete_map={'その他': 'dimgray'}
+        )
+
+        # --- 折れ線グラフ（給油回数：第2軸）を追加 ---
+        fig_bar_mix.add_trace(
+            go.Scatter(
+                x=df_bar_refueling['内容'],
+                y=df_bar_refueling['件数'],
+                mode='lines+markers',
+                name='給油回数（回）',
+                yaxis='y2'  # ← 第2軸を使う
+            )
+        )
+
+        # --- レイアウト設定（第2軸を追加） ---
+        fig_bar_mix.update_layout(
+            yaxis=dict(
+                title='金額（円）',
+                tickformat=',',
+                tickprefix='￥'
+            ),
+            yaxis2=dict(
+                title='給油回数（回）',
+                overlaying='y',      # ← 第1軸と重ねる
+                side='right',        # ← 右側に配置
+                tickformat=','
+            ),
+            showlegend=False
+        )
+        
+        # --内容別のパレート図--
+        df_bar_pareto = df_filtered.groupby(['内容'], as_index=False)['金額'].sum()
+        df_bar_pareto = df_bar_pareto.sort_values('金額', ascending=False).head(10)
+        
+        # タイトルを条件で切り替える
+        if selected_year == 'all':
+            title_text_bar3 = '全年 内容別支出金額上位１０位'
+        else:
+            title_text_bar3 = f'{selected_year}年 内容別支出金額上位１０位'
+            
+        fig_bar_pareto = px.bar(
+            df_bar_pareto,
+            x='内容',
+            y='金額',
+            color='内容',
+            title=title_text_bar3,
             color_discrete_map={'その他': 'dimgray'} 
         )
         
-        fig_bar_refueling.update_layout(
+        fig_bar_pareto.update_layout(
             barmode='stack', 
             yaxis=dict(tickformat=',', tickprefix='￥'),
             yaxis_title="金額（円）",
             showlegend=False
         )
         
-        df_bar_refueling_count = df_bar_refueling.sort_values('件数', ascending=False)
-        
-        # タイトルを条件で切り替える
-        if selected_year == 'all':
-            title_text_bar3 = '全年 給油回数'
-        else:
-            title_text_bar3 = f'{selected_year}年 給油回数'
-        
-        fig_bar_refueling_count = px.bar(
-            df_bar_refueling_count,
-            x='内容',
-            y='件数',
-            color='内容',
-            title=title_text_bar3,
-            hover_data={
-                '件数': True,
-                '平均金額': ':.0f',  # 小数なし
-                '金額合計': ':.0f'
-            },
-            color_discrete_map={'その他': 'dimgray'} 
-        )
-        
-        fig_bar_refueling_count.update_layout(
-            barmode='stack', 
-            yaxis=dict(tickformat=','),
-            yaxis_title="給油回数（回）",
-            showlegend=False
-        )
-        
         return (year_options, selected_year,
                 expense_options, selected_expense_category,
                 expense_suboptions, selected_expense_subcategory,
-                fig_bar_subcategory,fig_bar_refueling,fig_bar_refueling_count)
+                fig_bar_subcategory,fig_bar_mix,fig_bar_pareto)
