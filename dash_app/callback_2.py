@@ -69,6 +69,14 @@ def register_callbacks(dash_app):
         ]
         df_initial_assets = pd.DataFrame(initial_assets_list)
         df_initial_assets['期間'] = pd.to_datetime(df_initial_assets['期間'])
+        df_initial_assets['期間'] = (
+            pd.to_datetime(df_initial_assets['期間'])
+            .dt.to_period('M')
+            .astype(str)
+        )
+
+        df_initial_assets['年'] = df_initial_assets['年'].astype(int)
+        df_initial_assets['月'] = df_initial_assets['月'].astype(int)
 
         # --- Excel データと結合 ---
         combined_df = pd.concat([combined_df, df_initial_assets], ignore_index=True)

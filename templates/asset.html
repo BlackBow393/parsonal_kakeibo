@@ -30,6 +30,11 @@
         <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">&#10227;</button>
     </header>
     <main>
+        <!-- タブボタン -->
+        <div class="tabs">
+            <button class="tab-btn active" data-src="/dash2/" onclick="switchTab(this)">資産全体</button>
+        </div>
+
         <!-- 読み込み中オーバーレイ -->
         <div id="loading-overlay">
             <div class="loading-text">Loading...</div>
@@ -48,5 +53,6 @@
     <!-- 外部JSファイルを読み込み -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/routes.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tab.js') }}"></script>
 </body>
 </html>
