@@ -2,6 +2,8 @@ from flask import Flask, render_template, jsonify
 from dash_app.routes import routes_bp
 from dash_app.dashbord_1 import create_dash_app
 from dash_app.dashbord_2 import create_dash_app2
+from dash_app.dashbord_2_1 import create_dash_app2_1
+from dash_app.dashbord_2_2 import create_dash_app2_2
 from dash_app.dashbord_3 import create_dash_app3
 from dash_app.dashbord_4 import create_dash_app4
 from dash_app.dashbord_4_1 import create_dash_app4_1
@@ -17,6 +19,8 @@ app.register_blueprint(routes_bp)  # ← Blueprintを登録
 
 create_dash_app(app)
 create_dash_app2(app)
+create_dash_app2_1(app)
+create_dash_app2_2(app)
 create_dash_app3(app)
 create_dash_app4(app)
 create_dash_app4_1(app)
