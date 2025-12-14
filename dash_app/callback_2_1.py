@@ -18,9 +18,8 @@ def register_callbacks(dash_app):
         Output('year-dropdown', 'value'),
         Output('assets-category-dropdown', 'options'),
         Output('assets-category-dropdown', 'value'),
-        Output('cash-graph', 'figure'),
-        Output('cashles-graph', 'figure'),
-        Output('bank-graph', 'figure'),
+        Output('savings-graph', 'figure'),
+        Output('total-assets-value', 'children'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('assets-category-dropdown', 'value')
@@ -96,6 +95,10 @@ def register_callbacks(dash_app):
         }
         df_tx['資産グループ'] = df_tx['資産'].map(group_map)
 
+        # ★ カード・ローンを除外
+        exclude_groups = ['カード', 'ローン・奨学金']
+        df_tx = df_tx[~df_tx['資産グループ'].isin(exclude_groups)]
+
         # ==============================
         # ★ 全期間 × 全資産（ここが核心）
         # ==============================
@@ -163,29 +166,49 @@ def register_callbacks(dash_app):
         # ==============================
         # グラフ生成
         # ==============================
-        figs = {}
-        for g in ["現金","電子マネー","銀行","ローン・奨学金","カード"]:
-            df_g = df_view[df_view['資産グループ'] == g]
-            if df_g.empty:
-                figs[g] = px.area(title=f"{g} のデータなし")
-            else:
-                figs[g] = px.area(
-                    df_g,
-                    x='期間',
-                    y='累計金額',
-                    color='資産',
-                    title=f"{g} の残高推移"
-                )
-                figs[g].update_layout(
-                    xaxis_tickformat='%Y年%m月',
-                    yaxis_tickformat=',',
-                    yaxis_tickprefix='￥'
-                )
+        target_groups = ["現金", "電子マネー", "銀行"]
+        df_combined = df_view[df_view['資産グループ'].isin(target_groups)]
+        
+        fig_combined = px.area(
+            df_combined,
+            x='期間',
+            y='累計金額',
+            color='資産',              # ← 資産ごとに積み上げ
+            title='資産残高推移（現金・電子マネー・銀行）'
+        )
+        
+        fig_combined.update_layout(
+            xaxis_tickformat='%Y年%m月',
+            yaxis_tickformat=',',
+            yaxis_tickprefix='￥',
+            legend_title_text='資産'
+        )
+        
+        # ==============================
+        # 総資産の計算（最新月）
+        # ==============================
+
+        # 表示対象データ
+        df_total = df_view.copy()
+
+        if df_total.empty:
+            total_assets = 0
+        else:
+            # 最新の期間
+            latest_month = df_total['期間'].max()
+
+            # 最新月の各資産の残高
+            latest_assets = (
+                df_total[df_total['期間'] == latest_month]
+                .groupby('資産')['累計金額']
+                .last()
+            )
+
+            total_assets = int(latest_assets.sum())
 
         return (
             year_options, selected_year,
             assets_options, selected_assets_category,
-            figs["現金"],
-            figs["電子マネー"],
-            figs["銀行"]
+            fig_combined,
+            f"￥{total_assets:,}"
         )
