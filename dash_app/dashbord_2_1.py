@@ -7,7 +7,7 @@ def create_dash_app2_1(flask_app):
         __name__,
         server=flask_app,
         url_base_pathname='/dash2-1/',
-        include_assets_files=False   # ★ Dash の assets を完全に無効化
+        assets_folder="assets"
     )
 
     # 保存先が設定されている場合は、レイアウトを作成（コールバックで最新設定を参照）
@@ -46,8 +46,28 @@ def create_dash_app2_1(flask_app):
             id="loading-graphs",
             type="circle",
             children=html.Div([
-                dcc.Graph(id='savings-graph', style={'width': '100%', 'height': '450px'}),
-                html.Div( className="kpi-card",children=[ html.Div("総資産", className="kpi-title"),html.Div(id="total-assets-value", className="kpi-value") ])
+                html.Div(
+                    children=[
+                        html.Div("総資産",style={
+                            "fontSize": "14px",
+                            "color": "#666",
+                            "marginBottom": "8px"
+                        }),
+                        html.Div(id="total-assets-value",style={
+                            "fontSize": "36px",
+                            "fontWeight": "bold"
+                        })
+                    ],
+                    style={
+                        "textAlign": "center",
+                        "padding": "20px",
+                        "borderRadius": "12px",
+                        "background": "#b4b6b8",
+                        "boxShadow": "0 2px 8px rgba(0,0,0,.1)",
+                        "marginTop": "20px"
+                    }
+                ),
+                dcc.Graph(id='savings-graph', style={'width': '100%', 'height': '450px'})
             ])
         )
     ])
