@@ -19,6 +19,9 @@ def register_callbacks(dash_app):
         Output('assets-category-dropdown', 'options'),
         Output('assets-category-dropdown', 'value'),
         Output('loan-graph', 'figure'),
+        Output('total-debt-value', 'children'),
+        Output('total-debt-rate', 'children'),
+        Output('year-debt-rate', 'children'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('assets-category-dropdown', 'value')
@@ -93,6 +96,10 @@ def register_callbacks(dash_app):
             "楽天証券NISA": "銀行",
         }
         df_tx['資産グループ'] = df_tx['資産'].map(group_map)
+        
+        # ★ カード・ローンを除外
+        exclude_groups = ['現金', '電子マネー', '銀行', 'カード']
+        df_tx = df_tx[~df_tx['資産グループ'].isin(exclude_groups)]
 
         # ==============================
         # ★ 全期間 × 全資産（ここが核心）
@@ -161,27 +168,82 @@ def register_callbacks(dash_app):
         # ==============================
         # グラフ生成
         # ==============================
-        figs = {}
-        for g in ["現金","電子マネー","銀行","ローン・奨学金","カード"]:
-            df_g = df_view[df_view['資産グループ'] == g]
-            if df_g.empty:
-                figs[g] = px.area(title=f"{g} のデータなし")
-            else:
-                figs[g] = px.area(
-                    df_g,
-                    x='期間',
-                    y='累計金額',
-                    color='資産',
-                    title=f"{g} の残高推移"
-                )
-                figs[g].update_layout(
-                    xaxis_tickformat='%Y年%m月',
-                    yaxis_tickformat=',',
-                    yaxis_tickprefix='￥'
-                )
+        target_groups = ['ローン・奨学金']
+        df_combined = df_view[df_view['資産グループ'].isin(target_groups)]
+        
+        fig_combined = px.area(
+            df_combined,
+            x='期間',
+            y='累計金額',
+            color='資産',              # ← 資産ごとに積み上げ
+            title='資産残高推移（現金・電子マネー・銀行）'
+        )
+        
+        fig_combined.update_layout(
+            xaxis_tickformat='%Y年%m月',
+            yaxis_tickformat=',',
+            yaxis_tickprefix='￥',
+            legend_title_text='負債'
+        )
+        
+        # ==============================
+        # 総資産・成長率・前年比
+        # ==============================
+
+        df_total = df_view.copy()
+
+        if df_total.empty:
+            total_debt = 0
+            growth_rate = None
+            yoy_rate = None
+        else:
+            df_total = df_total.sort_values('期間')
+
+            first_month = df_total['期間'].min()
+            latest_month = df_total['期間'].max()
+            prev_year_month = latest_month - pd.DateOffset(years=1)
+
+            # 初期月の総資産
+            first_debt = (
+                df_total[df_total['期間'] == first_month]
+                .groupby('資産')['累計金額']
+                .last()
+                .sum()
+            )
+
+            # 最新月の総資産
+            total_debt = (
+                df_total[df_total['期間'] == latest_month]
+                .groupby('資産')['累計金額']
+                .last()
+                .sum()
+            )
+
+            # 前年同月の総資産
+            prev_year_debt = (
+                df_total[df_total['期間'] == prev_year_month]
+                .groupby('資産')['累計金額']
+                .last()
+                .sum()
+            )
+
+            # 成長率
+            growth_rate = (
+                (total_debt - first_debt) / first_debt * 100
+                if first_debt < 0 else None
+            )
+
+            # 前年比
+            yoy_rate = (
+                (total_debt - prev_year_debt) / prev_year_debt * 100
+                if prev_year_debt < 0 else None
+            )
 
         return (
             year_options, selected_year,
             assets_options, selected_assets_category,
-            figs["ローン・奨学金"]
+            fig_combined,
+            f"￥{int(total_debt):,}",
+            None if growth_rate is None else f"{growth_rate:+.1f}%",
+            None if yoy_rate is None else f"{yoy_rate:+.1f}%"
         )
