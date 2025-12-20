@@ -49,12 +49,12 @@ def create_dash_app2_1(flask_app):
                 html.Div(
                     children=[
                         html.Div("総資産",style={
-                            "fontSize": "14px",
+                            "fontSize": "24px",
                             "color": "#666",
                             "marginBottom": "8px"
                         }),
                         html.Div(id="total-assets-value",style={
-                            "fontSize": "36px",
+                            "fontSize": "48px",
                             "fontWeight": "bold"
                         })
                     ],
@@ -67,7 +67,49 @@ def create_dash_app2_1(flask_app):
                         "marginTop": "20px"
                     }
                 ),
-                dcc.Graph(id='savings-graph', style={'width': '100%', 'height': '450px'})
+                html.Div(
+                    children=[
+                        html.Div("資産成長率",style={
+                            "fontSize": "24px",
+                            "color": "#666",
+                            "marginBottom": "8px"
+                        }),
+                        html.Div(id="total-assets-rate",style={
+                            "fontSize": "48px",
+                            "fontWeight": "bold"
+                        })
+                    ],
+                    style={
+                        "textAlign": "center",
+                        "padding": "20px",
+                        "borderRadius": "12px",
+                        "background": "#b4b6b8",
+                        "boxShadow": "0 2px 8px rgba(0,0,0,.1)",
+                        "marginTop": "20px"
+                    }
+                ),
+                html.Div(
+                    children=[
+                        html.Div("対前年比 資産成長率",style={
+                            "fontSize": "24px",
+                            "color": "#666",
+                            "marginBottom": "8px"
+                        }),
+                        html.Div(id="year-assets-rate",style={
+                            "fontSize": "48px",
+                            "fontWeight": "bold"
+                        })
+                    ],
+                    style={
+                        "textAlign": "center",
+                        "padding": "20px",
+                        "borderRadius": "12px",
+                        "background": "#b4b6b8",
+                        "boxShadow": "0 2px 8px rgba(0,0,0,.1)",
+                        "marginTop": "20px"
+                    }
+                ),
+                dcc.Graph(id='savings-graph', style={'width': '100%', 'height': '900px'})
             ])
         )
     ])

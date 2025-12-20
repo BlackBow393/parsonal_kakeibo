@@ -20,6 +20,8 @@ def register_callbacks(dash_app):
         Output('assets-category-dropdown', 'value'),
         Output('savings-graph', 'figure'),
         Output('total-assets-value', 'children'),
+        Output('total-assets-rate', 'children'),
+        Output('year-assets-rate', 'children'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('assets-category-dropdown', 'value')
@@ -185,30 +187,64 @@ def register_callbacks(dash_app):
         )
         
         # ==============================
-        # 総資産の計算（最新月）
+        # 総資産・成長率・前年比
         # ==============================
 
-        # 表示対象データ
         df_total = df_view.copy()
 
         if df_total.empty:
             total_assets = 0
+            growth_rate = None
+            yoy_rate = None
         else:
-            # 最新の期間
-            latest_month = df_total['期間'].max()
+            df_total = df_total.sort_values('期間')
 
-            # 最新月の各資産の残高
-            latest_assets = (
+            first_month = df_total['期間'].min()
+            latest_month = df_total['期間'].max()
+            prev_year_month = latest_month - pd.DateOffset(years=1)
+
+            # 初期月の総資産
+            first_assets = (
+                df_total[df_total['期間'] == first_month]
+                .groupby('資産')['累計金額']
+                .last()
+                .sum()
+            )
+
+            # 最新月の総資産
+            total_assets = (
                 df_total[df_total['期間'] == latest_month]
                 .groupby('資産')['累計金額']
                 .last()
+                .sum()
             )
 
-            total_assets = int(latest_assets.sum())
+            # 前年同月の総資産
+            prev_year_assets = (
+                df_total[df_total['期間'] == prev_year_month]
+                .groupby('資産')['累計金額']
+                .last()
+                .sum()
+            )
+
+            # 成長率
+            growth_rate = (
+                (total_assets - first_assets) / first_assets * 100
+                if first_assets > 0 else None
+            )
+
+            # 前年比
+            yoy_rate = (
+                (total_assets - prev_year_assets) / prev_year_assets * 100
+                if prev_year_assets > 0 else None
+            )
 
         return (
             year_options, selected_year,
             assets_options, selected_assets_category,
             fig_combined,
-            f"￥{total_assets:,}"
+            f"￥{int(total_assets):,}",
+            None if growth_rate is None else f"{growth_rate:+.1f}%",
+            None if yoy_rate is None else f"{yoy_rate:+.1f}%"
         )
+
