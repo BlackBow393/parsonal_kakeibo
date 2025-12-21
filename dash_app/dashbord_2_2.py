@@ -88,28 +88,8 @@ def create_dash_app2_2(flask_app):
                         "marginTop": "20px"
                     }
                 ),
-                html.Div(
-                    children=[
-                        html.Div("対前年比 返済率",style={
-                            "fontSize": "24px",
-                            "color": "#666",
-                            "marginBottom": "8px"
-                        }),
-                        html.Div(id="year-debt-rate",style={
-                            "fontSize": "48px",
-                            "fontWeight": "bold"
-                        })
-                    ],
-                    style={
-                        "textAlign": "center",
-                        "padding": "20px",
-                        "borderRadius": "12px",
-                        "background": "#b4b6b8",
-                        "boxShadow": "0 2px 8px rgba(0,0,0,.1)",
-                        "marginTop": "20px"
-                    }
-                ),
-                dcc.Graph(id='loan-graph', style={'width': '100%', 'height': '900px'})
+                dcc.Graph(id='loan-graph', style={'width': '100%', 'height': '900px'}),
+                dcc.Graph(id='loan-pie', style={'width': '100%', 'height': '900px'})
             ])
         )
     ])

@@ -21,7 +21,7 @@ def register_callbacks(dash_app):
         Output('loan-graph', 'figure'),
         Output('total-debt-value', 'children'),
         Output('total-debt-rate', 'children'),
-        Output('year-debt-rate', 'children'),
+        Output('loan-pie', 'figure'),
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('assets-category-dropdown', 'value')
@@ -46,7 +46,7 @@ def register_callbacks(dash_app):
 
         if not dfs:
             empty = px.area(title="対象データがありません")
-            return ([], None, [], 'all', empty, empty, empty, empty, empty)
+            return ([], None, [], 'all', empty, empty)
 
         df_tx = pd.concat(dfs, ignore_index=True)
 
@@ -238,6 +238,35 @@ def register_callbacks(dash_app):
                 (total_debt - prev_year_debt) / prev_year_debt * 100
                 if prev_year_debt < 0 else None
             )
+        
+        # 分類の円グラフ作成
+        def make_pie(df, title):
+            if df.empty or '資産' not in df.columns:
+                return px.pie(title="対象データがありません")
+            grouped = df.groupby('資産')['累計金額'].last().reset_index()
+            grouped['金額_表示用'] = grouped['累計金額'].abs()
+            # 0 は除外（保険）
+            grouped = grouped[grouped['金額_表示用'] > 0]
+
+            if grouped.empty:
+                return px.pie(title="対象データがありません")
+
+            fig = px.pie(
+                grouped,
+                names='資産',
+                values='金額_表示用',
+                title=title
+            )
+
+            fig.update_traces(
+                sort=False,
+                direction='clockwise',
+                textinfo='label+percent'
+            )
+
+            return fig
+        
+        fig_pie_loan = make_pie(df_view, '負債の分類割合')
 
         return (
             year_options, selected_year,
@@ -245,5 +274,5 @@ def register_callbacks(dash_app):
             fig_combined,
             f"￥{int(total_debt):,}",
             None if growth_rate is None else f"{growth_rate:+.1f}%",
-            None if yoy_rate is None else f"{yoy_rate:+.1f}%"
+            fig_pie_loan
         )
