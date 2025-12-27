@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-from dash import Input, Output
+from dash import Input, Output, State
 import os, json
 
 CONFIG_FILE = "config.json"
@@ -29,7 +29,8 @@ def register_callbacks(dash_app):
         Input('year-dropdown', 'value'),
         Input('month-dropdown', 'value'),
         Input('income-category-dropdown', 'value'),
-        Input('income-subcategory-dropdown', 'value')
+        Input('income-subcategory-dropdown', 'value'),
+        prevent_initial_call=True
     )
     def update_graph(selected_year, selected_month, selected_income_category, selected_income_subcategory):
         # --- 最新の設定を取得 ---
@@ -299,3 +300,17 @@ def register_callbacks(dash_app):
                 income_options, selected_income_category,
                 income_suboptions, selected_income_subcategory,
                 fig_bar, fig_line, fig_pie_in, fig_pie_in_sub,fig_bar_income)
+    
+    @dash_app.callback(
+        Output("sidebar", "className"),
+        Output("overlay", "className"),
+        Input("menu-toggle", "n_clicks"),
+        Input("overlay", "n_clicks"),
+        State("sidebar", "className"),
+        prevent_initial_call=True
+    )
+    def toggle_sidebar(menu_clicks, overlay_clicks, current_class):
+        if current_class and "active" in current_class:
+            return "sidebar", "overlay"
+        else:
+            return "sidebar active", "overlay active"

@@ -1,0 +1,39 @@
+/* メニューボタン */
+.menu-btn {
+    position: absolute;   /* ← fixed ではなく absolute にする */
+    top: 15px;
+    left: 15px;
+    font-size: 26px;
+    background-color: #111;
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 2000;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+
+.menu-btn:hover {
+    background-color: #575757;
+}
+
+/* 更新ボタン */
+.refresh-btn {
+    position: absolute;   /* ← fixed ではなく absolute にする */
+    top: 15px;
+    right: 15px;          /* ← 左ではなく右に配置 */
+    font-size: 26px;
+    background-color: #111;
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 2000;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+
+.refresh-btn:hover {
+    background-color: #575757;
+}

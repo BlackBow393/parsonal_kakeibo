@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, redirect
 from dash_app.routes import routes_bp
 from dash_app.dashbord_1 import create_dash_app
 from dash_app.dashbord_2 import create_dash_app2
@@ -50,7 +50,8 @@ def asset():
 
 @app.route('/income')
 def income():
-    return render_template('income.html')
+    #return render_template('income.html')   #iframe利用時
+    return redirect('/income/')   #iframe非利用時
 
 @app.route('/expense')
 def expense():
