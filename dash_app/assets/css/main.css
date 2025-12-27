@@ -16,7 +16,6 @@ footer .footer_item {
     margin: 0 5px;
     padding: 5px 0;
     color: white;
-    height: auto;
 }
 
 /* =========================
@@ -24,7 +23,7 @@ footer .footer_item {
    ========================= */
 .sidebar {
     height: 100%;
-    width: 0;
+    width: 250px;
     position: fixed;
     z-index: 1500;
     top: 0;
@@ -32,40 +31,39 @@ footer .footer_item {
     background-color: #111;
     overflow-x: hidden;
     padding-top: 80px;
-
+    transform: translateX(-100%);
     transition: width 0.3s ease;
 }
 
-/* Dash callback が付ける */
+/* 幅を開く */
 .sidebar.active {
-    width: 250px;
-}
-
-/* メニューリンク */
-.sidebar a {
-    padding: 10px 15px;
-    text-decoration: none;
-    font-size: 24px;
-    color: #f1f1f1;
-    display: block;
-
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-/* サイドバーが active のとき表示 */
-.sidebar.active a {
-    opacity: 1;
     transform: translateX(0);
 }
 
+/* メニューリンク（初期は非表示） */
+/* サイドバー内リンクの見た目（重要） */
+.sidebar a {
+    display: block;
+    padding: 10px 15px;
+    font-size: 24px;
+    color: #f1f1f1;
+    text-decoration: none;
+
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* 完全に開いた後だけ表示 */
+.sidebar.active.show a {
+    opacity: 1;
+}
+
 /* ▼ 順番にフェードイン */
-.sidebar.active a:nth-child(1) { transition-delay: 0.15s; }
-.sidebar.active a:nth-child(2) { transition-delay: 0.25s; }
-.sidebar.active a:nth-child(3) { transition-delay: 0.35s; }
-.sidebar.active a:nth-child(4) { transition-delay: 0.45s; }
-.sidebar.active a:nth-child(5) { transition-delay: 0.55s; }
+.sidebar.active.show a:nth-child(1) { transition-delay: 0.15s; }
+.sidebar.active.show a:nth-child(2) { transition-delay: 0.25s; }
+.sidebar.active.show a:nth-child(3) { transition-delay: 0.35s; }
+.sidebar.active.show a:nth-child(4) { transition-delay: 0.45s; }
+.sidebar.active.show a:nth-child(5) { transition-delay: 0.55s; }
 
 .sidebar a:hover {
     background-color: #575757;
@@ -88,7 +86,6 @@ footer .footer_item {
     transition: opacity 0.3s ease;
 }
 
-/* Dash callback が付ける */
 .overlay.active {
     opacity: 1;
     pointer-events: auto;

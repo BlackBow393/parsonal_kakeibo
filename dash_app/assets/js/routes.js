@@ -1,27 +1,32 @@
-function refreshData() {
+(function waitForButton() {
     const btn = document.getElementById("refresh-btn");
-    const originalText = btn.innerHTML;
 
-    // 処理中の表示
-    btn.innerHTML = "保存中…";
-    btn.disabled = true;
+    if (!btn) {
+        setTimeout(waitForButton, 300);
+        return;
+    }
 
-    fetch("/refresh", { method: "POST" })
-        .then(response => response.json())
-        .then(data => {
+    console.log("refresh-btn found");
+
+    btn.addEventListener("click", async () => {
+        const original = btn.innerHTML;
+        btn.innerHTML = "保存中…";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch("/refresh", { method: "POST" });
+            const data = await res.json();
+
             if (data.status === "success") {
-                alert(`保存完了: ${data.files.length} 件のファイルを保存しました`);
+                alert(`保存完了: ${data.files.length} 件`);
             } else {
-                alert(`更新エラー: ${data.message}`);
+                alert(`エラー: ${data.message}`);
             }
-        })
-        .catch(error => {
-            console.error("更新エラー:", error);
+        } catch (e) {
             alert("更新に失敗しました");
-        })
-        .finally(() => {
-            // 元のボタン表示に戻す
-            btn.innerHTML = originalText;
+        } finally {
+            btn.innerHTML = original;
             btn.disabled = false;
-        });
-}
+        }
+    });
+})();

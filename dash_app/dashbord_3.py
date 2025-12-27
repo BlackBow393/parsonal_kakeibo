@@ -31,6 +31,13 @@ def menu_button():
         n_clicks=0
     )
 
+# フッター
+def footer():
+    return html.Footer([
+        html.P("最終更新日", className="footer_item"),
+        html.P("Ver.1.0.0", className="footer_item"),
+    ])
+
 def create_dash_app3(flask_app):
     dash_app = Dash(
         __name__,
@@ -107,7 +114,8 @@ def create_dash_app3(flask_app):
                     dcc.Graph(id='income-graph')
                 ])
             )
-        ])
+        ]),
+        footer()
     ])
 
     # コールバック登録（コールバック側で最新の config.json を参照）
