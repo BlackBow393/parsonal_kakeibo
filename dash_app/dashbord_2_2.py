@@ -12,7 +12,7 @@ def create_dash_app2_2(flask_app):
 
     # 保存先が設定されている場合は、レイアウトを作成（コールバックで最新設定を参照）
     dash_app.layout = html.Div([
-        html.H2("資産の月別推移"),
+        html.H2("負債分析ダッシュボード"),
         
         html.Div([
             html.Div([
