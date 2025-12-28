@@ -45,7 +45,8 @@ def create_dash_app3(flask_app):
         #url_base_pathname='/dash3/',   #iframe利用時
         url_base_pathname='/income/',   #iframe非利用時
         suppress_callback_exceptions=True,
-        assets_folder="assets"
+        assets_folder="assets",
+        title="個人家計簿アプリ"
     )
 
     # 保存先が設定されている場合は、レイアウトを作成（コールバックで最新設定を参照）
