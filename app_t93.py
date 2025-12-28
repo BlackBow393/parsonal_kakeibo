@@ -4,6 +4,7 @@ from dash_app.dashbord_1 import create_dash_app
 from dash_app.dashbord_2 import create_dash_app2
 from dash_app.dashbord_2_1 import create_dash_app2_1
 from dash_app.dashbord_2_2 import create_dash_app2_2
+from dash_app.dashbord_2_3 import create_dash_app2_3
 from dash_app.dashbord_3 import create_dash_app3
 from dash_app.dashbord_4 import create_dash_app4
 from dash_app.dashbord_4_1 import create_dash_app4_1
@@ -21,6 +22,7 @@ create_dash_app(app)
 create_dash_app2(app)
 create_dash_app2_1(app)
 create_dash_app2_2(app)
+create_dash_app2_3(app)
 create_dash_app3(app)
 create_dash_app4(app)
 create_dash_app4_1(app)

@@ -1,5 +1,4 @@
 from dash import Dash, dcc, html
-from dash import dash_table
 from dash_app.callback_2 import register_callbacks  # コールバックをインポート
 
 def create_dash_app2(flask_app):
