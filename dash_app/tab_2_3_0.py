@@ -46,7 +46,8 @@ def create_layout():
         menu_button(),
         
         # === ヘッダー ===
-        html.Header([
+        html.Header(
+            className="headder-asset",children=[
             html.H1("個人家計簿"),
             html.H2("収入分析"),
             html.Button("↻", id="refresh-btn", className="refresh-btn")

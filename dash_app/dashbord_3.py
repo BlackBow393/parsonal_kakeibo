@@ -58,7 +58,8 @@ def create_dash_app3(flask_app):
         menu_button(),
         
         # === ヘッダー ===
-        html.Header([
+        html.Header(
+            className="headder-income",children=[
             html.H1("個人家計簿"),
             html.H2("収入分析"),
             html.Button("↻", id="refresh-btn", className="refresh-btn")
