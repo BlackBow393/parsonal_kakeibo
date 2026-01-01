@@ -49,7 +49,7 @@ def create_layout():
         html.Header(
             className="headder-asset",children=[
             html.H1("個人家計簿"),
-            html.H2("収入分析"),
+            html.H2("資産分析"),
             html.Button("↻", id="refresh-btn", className="refresh-btn")
         ]),
         
