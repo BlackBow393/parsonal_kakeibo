@@ -14,17 +14,17 @@ def load_config():
 def register_callbacks_2_3_3(dash_app):
 
     @dash_app.callback(
-        Output('year-dropdown', 'options'),
-        Output('year-dropdown', 'value'),
-        Output('assets-category-dropdown', 'options'),
-        Output('assets-category-dropdown', 'value'),
-        Output('loan-graph', 'figure'),
+        Output('year-dropdown3', 'options'),
+        Output('year-dropdown3', 'value'),
+        Output('assets-category-dropdown3', 'options'),
+        Output('assets-category-dropdown3', 'value'),
+        Output('loan-graph3', 'figure'),
         Output('total-debt-value', 'children'),
         Output('total-debt-rate', 'children'),
         Output('loan-pie', 'figure'),
-        Input('year-dropdown', 'value'),
-        Input('month-dropdown', 'value'),
-        Input('assets-category-dropdown', 'value')
+        Input('year-dropdown3', 'value'),
+        Input('month-dropdown3', 'value'),
+        Input('assets-category-dropdown3', 'value')
     )
     def update_graph(selected_year, selected_month, selected_assets_category):
 

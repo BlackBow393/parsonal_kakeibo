@@ -6,14 +6,14 @@ def layout_2_3_3():
         html.Div([
             html.Div([
                 html.H3("年"),
-                dcc.Dropdown(id='year-dropdown', options=[], value=None, clearable=False,
+                dcc.Dropdown(id='year-dropdown3', options=[], value=None, clearable=False,
                              style={'width': '200px', 'margin-bottom': '20px'})
             ], style={'margin-right': '20px'}),
             
             html.Div([
                 html.H3("月"),
                 dcc.Dropdown(
-                    id='month-dropdown',
+                    id='month-dropdown3',
                     options=[{'label': "すべて", 'value': 'all'}] + [
                         {'label': f"{m}月", 'value': m} for m in range(1, 13)
                     ],
@@ -25,14 +25,14 @@ def layout_2_3_3():
             
             html.Div([
                 html.H3("資産分類"),
-                dcc.Dropdown(id='assets-category-dropdown', options=[], value='all', clearable=False,
+                dcc.Dropdown(id='assets-category-dropdown3', options=[], value='all', clearable=False,
                              style={'width': '200px', 'margin-bottom': '20px'})
             ], style={'margin-right': '20px'})
         ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
         
         # Loadingを有効化するためにラップ
         dcc.Loading(
-            id="loading-graphs",
+            id="loading-graphs3",
             type="circle",
             children=html.Div([
                 html.Div(
@@ -77,7 +77,7 @@ def layout_2_3_3():
                         "marginTop": "20px"
                     }
                 ),
-                dcc.Graph(id='loan-graph', style={'width': '100%', 'height': '900px'}),
+                dcc.Graph(id='loan-graph3', style={'width': '100%', 'height': '900px'}),
                 dcc.Graph(id='loan-pie', style={'width': '100%', 'height': '900px'})
             ])
         )

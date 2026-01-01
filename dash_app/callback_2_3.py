@@ -18,5 +18,3 @@ def register_tab_callbacks(dash_app):
             return layout_2_3_3()
         else:
             return layout_2_3_1()
-        #print("TAB CHANGED:", tab)
-        #return html.H1(f"現在のタブ: {tab}")

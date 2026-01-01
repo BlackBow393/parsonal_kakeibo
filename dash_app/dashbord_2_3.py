@@ -17,7 +17,7 @@ def create_dash_app2_3(flask_app):
     
     register_tab_callbacks(dash_app)
     register_callbacks_2_3_1(dash_app)
-    #register_callbacks_2_3_2(dash_app)
-    #register_callbacks_2_3_3(dash_app)
+    register_callbacks_2_3_2(dash_app)
+    register_callbacks_2_3_3(dash_app)
         
     return dash_app
