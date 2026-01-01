@@ -1,11 +1,11 @@
 from dash import Dash, html
-from dash_app.tab_2_3_0 import create_layout
-from dash_app.callback_2_3 import register_tab_callbacks
+from dash_app.tab_2 import create_layout
+from dash_app.callback_2 import register_tab_callbacks
 from dash_app.tabs.tab_2_3_1.callback_2_3_1 import register_callbacks_2_3_1
 from dash_app.tabs.tab_2_3_2.callback_2_3_2 import register_callbacks_2_3_2
 from dash_app.tabs.tab_2_3_3.callback_2_3_3 import register_callbacks_2_3_3
 
-def create_dash_app2_3(flask_app):
+def create_dash_app2(flask_app):
     dash_app = Dash(
         __name__,
         server=flask_app,
