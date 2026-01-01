@@ -1,0 +1,42 @@
+header {
+    width: 100%;
+    background-color: #64bb7e;
+    margin: 0;
+    padding: 0;
+}
+
+header h1 {
+    width: 100;
+    margin: 0;
+    padding: 5px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 52px;
+}
+
+header h2 {
+    width: 100;
+    margin: 0;
+    padding: 5px;
+    text-align: right;
+    font-size: 24px;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.tab-btn {
+    padding: 10px 20px;
+    border: 1px solid #ccc;
+    background-color: #9c9999;
+    cursor: pointer;
+    border-radius: 5px 5px 0 0;
+    transition: 0.2s;
+}
+.tab-btn.active {
+    background-color: #ffffff;
+    border-bottom: 2px solid #ffffff;
+    font-weight: bold;
+}
