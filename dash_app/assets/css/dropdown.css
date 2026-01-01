@@ -1,0 +1,14 @@
+.dropdown {
+    width: 200px;
+    margin-bottom: 20px;
+}
+
+.dd-frame {
+    margin-right: 20px;
+}
+
+.dd-bord {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}

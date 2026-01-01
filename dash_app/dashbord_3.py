@@ -69,38 +69,35 @@ def create_dash_app3(flask_app):
         html.Main([
             html.H2("収入分析ダッシュボード"),
             
-            html.Div([
-                html.Div([
+            html.Div(className='dd-bord',children=[
+                html.Div(className='dd-frame',children=[
                     html.H3("年"),
-                    dcc.Dropdown(id='year-dropdown', options=[], value='all', clearable=False,
-                                style={'width': '200px', 'margin-bottom': '20px'})
-                ], style={'margin-right': '20px'}),
+                    dcc.Dropdown(id='year-dropdown', className='dropdown', options=[], value='all', clearable=False)
+                ]),
                 
-                html.Div([
+                html.Div(className='dd-frame',children=[
                     html.H3("月"),
                     dcc.Dropdown(
                         id='month-dropdown',
+                        className='dropdown',
                         options=[{'label': "すべて", 'value': 'all'}] + [
                             {'label': f"{m}月", 'value': m} for m in range(1, 13)
                         ],
                         value='all',
-                        clearable=False,
-                        style={'width': '200px', 'margin-bottom': '20px'}
+                        clearable=False
                     )
-                ], style={'margin-right': '20px'}),
+                ]),
                 
-                html.Div([
+                html.Div(className='dd-frame',children=[
                     html.H3("収入分類"),
-                    dcc.Dropdown(id='income-category-dropdown', options=[], value='all', clearable=False,
-                                style={'width': '200px', 'margin-bottom': '20px'})
-                ], style={'margin-right': '20px'}),
+                    dcc.Dropdown(id='income-category-dropdown', className='dropdown', options=[], value='all', clearable=False)
+                ]),
                 
-                html.Div([
+                html.Div(className='dd-frame',children=[
                     html.H3("収入小分類"),
-                    dcc.Dropdown(id='income-subcategory-dropdown', options=[], value='all', clearable=False,
-                                style={'width': '200px', 'margin-bottom': '20px'})
-                ], style={'margin-right': '20px'})
-            ], style={'display': 'flex', 'align-items': 'center', 'gap': '20px'}),
+                    dcc.Dropdown(id='income-subcategory-dropdown', className='dropdown', options=[], value='all', clearable=False)
+                ])
+            ]),
             
             # Loadingを有効化するためにラップ
             dcc.Loading(
