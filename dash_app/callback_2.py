@@ -1,7 +1,7 @@
 from dash import Input, Output, State
-from dash_app.tabs.tab_2_3_1.layout_2_1 import layout_2_1
-from dash_app.tabs.tab_2_3_2.layout_2_2 import layout_2_2
-from dash_app.tabs.tab_2_3_3.layout_2_3 import layout_2_3
+from dash_app.tabs.tab_2_1.layout_2_1 import layout_2_1
+from dash_app.tabs.tab_2_2.layout_2_2 import layout_2_2
+from dash_app.tabs.tab_2_3.layout_2_3 import layout_2_3
 
 def register_tab_callbacks(dash_app):
     
