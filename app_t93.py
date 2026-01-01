@@ -4,9 +4,6 @@ from dash_app.dashbord_1 import create_dash_app
 from dash_app.dashbord_2 import create_dash_app2
 from dash_app.dashbord_3 import create_dash_app3
 from dash_app.dashbord_4 import create_dash_app4
-from dash_app.dashbord_4_1 import create_dash_app4_1
-from dash_app.dashbord_4_2 import create_dash_app4_2
-from dash_app.dashbord_4_3 import create_dash_app4_3
 from dash_app.folder_selecter import choose_folder
 import os, json
 
@@ -20,9 +17,6 @@ create_dash_app(app)
 create_dash_app2(app)
 create_dash_app3(app)
 create_dash_app4(app)
-create_dash_app4_1(app)
-create_dash_app4_2(app)
-create_dash_app4_3(app)
 
 CONFIG_FILE = "config.json"
 
@@ -54,7 +48,8 @@ def income():
 
 @app.route('/expense')
 def expense():
-    return render_template('expense.html')
+    #return render_template('expense.html')   #iframe利用時
+    return redirect('/expense/')   #iframe非利用時
 
 @app.route('/setting')
 def setting():
