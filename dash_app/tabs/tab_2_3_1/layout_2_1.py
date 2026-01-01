@@ -1,6 +1,6 @@
 from dash import html, dcc
 
-def layout_2_3_1():
+def layout_2_1():
     return html.Div([
         html.H2("資産の月別推移"),
         

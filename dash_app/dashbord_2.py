@@ -1,9 +1,9 @@
 from dash import Dash, html
 from dash_app.tab_2 import create_layout
 from dash_app.callback_2 import register_tab_callbacks
-from dash_app.tabs.tab_2_3_1.callback_2_3_1 import register_callbacks_2_3_1
-from dash_app.tabs.tab_2_3_2.callback_2_3_2 import register_callbacks_2_3_2
-from dash_app.tabs.tab_2_3_3.callback_2_3_3 import register_callbacks_2_3_3
+from dash_app.tabs.tab_2_3_1.callback_2_1 import register_callbacks_2_1
+from dash_app.tabs.tab_2_3_2.callback_2_2 import register_callbacks_2_2
+from dash_app.tabs.tab_2_3_3.callback_2_3 import register_callbacks_2_3
 
 def create_dash_app2(flask_app):
     dash_app = Dash(
@@ -18,8 +18,8 @@ def create_dash_app2(flask_app):
     dash_app.layout = create_layout()
     
     register_tab_callbacks(dash_app)
-    register_callbacks_2_3_1(dash_app)
-    register_callbacks_2_3_2(dash_app)
-    register_callbacks_2_3_3(dash_app)
+    register_callbacks_2_1(dash_app)
+    register_callbacks_2_2(dash_app)
+    register_callbacks_2_3(dash_app)
         
     return dash_app

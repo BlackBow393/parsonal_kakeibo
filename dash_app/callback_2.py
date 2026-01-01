@@ -1,7 +1,7 @@
 from dash import Input, Output, State
-from dash_app.tabs.tab_2_3_1.tab_2_3_1 import layout_2_3_1
-from dash_app.tabs.tab_2_3_2.tab_2_3_2 import layout_2_3_2
-from dash_app.tabs.tab_2_3_3.tab_2_3_3 import layout_2_3_3
+from dash_app.tabs.tab_2_3_1.layout_2_1 import layout_2_1
+from dash_app.tabs.tab_2_3_2.layout_2_2 import layout_2_2
+from dash_app.tabs.tab_2_3_3.layout_2_3 import layout_2_3
 
 def register_tab_callbacks(dash_app):
     
@@ -11,13 +11,13 @@ def register_tab_callbacks(dash_app):
     )
     def render_tab(tab):
         if tab == "all":
-            return layout_2_3_1()
+            return layout_2_1()
         elif tab == "saving":
-            return layout_2_3_2()
+            return layout_2_2()
         elif tab == "debt":
-            return layout_2_3_3()
+            return layout_2_3()
         else:
-            return layout_2_3_1()
+            return layout_2_1()
         
     @dash_app.callback(
         Output("sidebar", "className"),

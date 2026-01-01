@@ -11,7 +11,7 @@ def load_config():
             return json.load(f)
     return {}
 
-def register_callbacks_2_3_2(dash_app):
+def register_callbacks_2_2(dash_app):
 
     @dash_app.callback(
         Output('year-dropdown2', 'options'),
