@@ -9,7 +9,9 @@ def create_dash_app2_3(flask_app):
     dash_app = Dash(
         __name__,
         server=flask_app,
-        url_base_pathname='/dash2-3/',
+        #url_base_pathname='/dash2-3/',   #iframe利用時
+        url_base_pathname='/asset/',   #iframe非利用時
+        title="個人家計簿アプリ",
         suppress_callback_exceptions=True
     )
     

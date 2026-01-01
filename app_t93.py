@@ -42,7 +42,8 @@ def home():
 
 @app.route('/asset')
 def asset():
-    return render_template('asset.html')
+    #return render_template('asset.html')   #iframe利用時
+    return redirect('/asset/')   #iframe非利用時
 
 @app.route('/income')
 def income():
