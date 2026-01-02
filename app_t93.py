@@ -4,7 +4,6 @@ from dash_app.dashbord_1 import create_dash_app
 from dash_app.dashbord_2 import create_dash_app2
 from dash_app.dashbord_3 import create_dash_app3
 from dash_app.dashbord_4 import create_dash_app4
-from dash_app.dashbord_5 import create_dash_app5
 from dash_app.folder_selecter import choose_folder
 import os, json
 
@@ -18,7 +17,6 @@ create_dash_app(app)
 create_dash_app2(app)
 create_dash_app3(app)
 create_dash_app4(app)
-create_dash_app5(app)
 
 CONFIG_FILE = "config.json"
 
@@ -55,10 +53,9 @@ def expense():
 
 @app.route('/setting')
 def setting():
-    #config = load_config()
-    #folder_path = config.get("folder_path", "")  # 保存済みフォルダパスを取得
-    #return render_template('setting.html', folder_path=folder_path)
-    return redirect('/setting/')
+    config = load_config()
+    folder_path = config.get("folder_path", "")  # 保存済みフォルダパスを取得
+    return render_template('setting.html', folder_path=folder_path)
 
 @app.route("/select_folder", methods=["GET"])
 def select_folder():

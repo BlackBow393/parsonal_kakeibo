@@ -1,5 +1,5 @@
 from dash import Dash, dcc, html, dash_table
-from dash_app.callbak_5 import register_callbacks  # コールバックをインポート
+from dash_app.callback_5 import register_callbacks  # コールバックをインポート
 
 # サイドバー
 def sidebar():
@@ -71,7 +71,7 @@ def create_dash_app5(flask_app):
             
             html.Div(className='setting-area',children=[
                 html.Button("📁", id="folder-Btn"),
-                html.Input(
+                dcc.Input(
                     id="folder-Path",
                     value="",
                     readOnly=True
