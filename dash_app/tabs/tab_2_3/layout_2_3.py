@@ -47,8 +47,8 @@ def layout_2_3():
                         html.Div(id="total-debt-rate",className='card-font')
                     ]
                 ),
-                dcc.Graph(id='loan-graph3', style={'width': '100%', 'height': '900px'}),
-                dcc.Graph(id='loan-pie', style={'width': '100%', 'height': '900px'})
+                dcc.Graph(id='loan-graph3', style={'width': '100%', 'height': '600px'}),
+                dcc.Graph(id='loan-pie', style={'width': '100%', 'height': '600px'})
             ])
         )
     ])
