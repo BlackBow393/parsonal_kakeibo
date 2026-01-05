@@ -1,6 +1,7 @@
 from dash import Input, Output, State
 from dash_app.folder_selecter import choose_folder
 import os, json
+
 CONFIG_FILE = "config.json"
 
 def load_config():
@@ -14,21 +15,13 @@ def save_config(config):
         json.dump(config, f, ensure_ascii=False, indent=4)
 
 def register_callbacks(dash_app):
-    # 初期読み込み
-    @dash_app.callback(
-        Output('folder-Path', 'value'),
-        Input('folder-Path', 'id') # ダミーInput
-    )
-    def load_initial_folder():
-        config = load_config()
-        return config.get('folder-Path', '')
     
     # フォルダー選択
     @dash_app.callback(
-        Output('folder-Path', 'value'),
+        Output('folderPath', 'value'),
         Output('folder-table', 'columns'),
         Output('folder-table', 'data'),
-        Input('folder-Btn', 'n_clicks'),
+        Input('selectFolderBtn', 'n_clicks'),
         prevent_initial_call=True
     )
     def select_folder(n_clicks):
@@ -38,17 +31,22 @@ def register_callbacks(dash_app):
         if not folder_path:
             return '', [], []
         
+        config = load_config()
+        config['folder_path'] = folder_path
+        save_config(config)
+        
         files = []
+        
         for name in os.listdir(folder_path):
             full_path = os.path.join(folder_path, name)
             files.append({
-                "name": name,
-                "type": "フォルダ" if os.path.isdir(full_path) else "フォルダ"
+                'name': name,
+                'type': 'フォルダ' if os.path.isdir(full_path) else 'ファイル'
             })
-        
+            
         columns = [
-            {"name":"名前", "id":"name"},
-            {"name":"種別", "id":"type"}
+            {'name': '名前', 'id': 'name'},
+            {'name': '種別', 'id': 'type'}
         ]
         
         return folder_path, columns, files
