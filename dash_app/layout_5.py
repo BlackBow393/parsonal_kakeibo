@@ -10,8 +10,7 @@ def sidebar():
             html.A("資産分析", href="/asset/"),
             html.A("収入分析", href="/income/"),
             html.A("支出分析", href="/expense/"),
-            html.A("設定", href="/setting"),
-            html.A("テスト", href="/setting/")
+            html.A("設定", href="/setting/")
         ]
     )
 

@@ -55,9 +55,10 @@ def expense():
 
 @app.route('/setting')
 def setting():
-    config = load_config()
-    folder_path = config.get("folder_path", "")  # 保存済みフォルダパスを取得
-    return render_template('setting.html', folder_path=folder_path)
+    #config = load_config()
+    #folder_path = config.get("folder_path", "")  # 保存済みフォルダパスを取得
+    #return render_template('setting.html', folder_path=folder_path)
+    return redirect('/setting/')
 
 @app.route('/test')
 def test():
