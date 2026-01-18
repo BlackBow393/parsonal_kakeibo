@@ -11,7 +11,7 @@ def create_dash_app4(flask_app):
         server=flask_app,
         #url_base_pathname='/dash4-3/',   #iframe利用時
         url_base_pathname='/expense/',   #iframe非利用時
-        title="個人家計簿アプリ",
+        title="個人家計簿アプリ　～支出分析～",
         suppress_callback_exceptions=True
     )
     

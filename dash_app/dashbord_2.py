@@ -11,7 +11,7 @@ def create_dash_app2(flask_app):
         server=flask_app,
         #url_base_pathname='/dash2-3/',   #iframe利用時
         url_base_pathname='/asset/',   #iframe非利用時
-        title="個人家計簿アプリ",
+        title="個人家計簿アプリ　～資産分析～",
         assets_folder='assets',
         suppress_callback_exceptions=True
     )

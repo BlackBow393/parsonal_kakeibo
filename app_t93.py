@@ -40,28 +40,18 @@ def home():
 
 @app.route('/asset')
 def asset():
-    #return render_template('asset.html')   #iframe利用時
     return redirect('/asset/')   #iframe非利用時
 
 @app.route('/income')
 def income():
-    #return render_template('income.html')   #iframe利用時
     return redirect('/income/')   #iframe非利用時
 
 @app.route('/expense')
 def expense():
-    #return render_template('expense.html')   #iframe利用時
     return redirect('/expense/')   #iframe非利用時
 
 @app.route('/setting')
 def setting():
-    #config = load_config()
-    #folder_path = config.get("folder_path", "")  # 保存済みフォルダパスを取得
-    #return render_template('setting.html', folder_path=folder_path)
-    return redirect('/setting/')
-
-@app.route('/test')
-def test():
     return redirect('/setting/')
 
 @app.route("/select_folder", methods=["GET"])

@@ -19,7 +19,7 @@ def create_dash_app5(flask_app):
         url_base_pathname='/setting/',   #iframe非利用時
         suppress_callback_exceptions=True,
         assets_folder="assets",
-        title="個人家計簿アプリ"
+        title="個人家計簿アプリ　～設定～"
     )
     
     dash_app.layout = lambda: serve_layout(load_config())
