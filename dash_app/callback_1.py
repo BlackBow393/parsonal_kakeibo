@@ -91,10 +91,16 @@ def register_callbacks(dash_app):
 
         # 棒グラフ
         summary_bar = df_filtered.groupby(['期間','収入/支出'])['金額'].sum().reset_index()
+        
+        # 🔴 これを追加
+        summary_bar['期間'] = pd.to_datetime(summary_bar['期間'])
+
+        # 月順に並び替え（重要）
+        summary_bar = summary_bar.sort_values('期間')
         fig_bar = px.bar(summary_bar, x='期間', y='金額', color='収入/支出', barmode='group',
                          title="期間別収支分類", labels={'金額':'金額（円）','期間':'期間'},
                          color_discrete_map={'収入':'cornflowerblue', '支出':'tomato'})
-        fig_bar.update_layout(xaxis=dict(tickformat='%Y年%m月', rangeslider=dict(visible=False)),
+        fig_bar.update_layout(xaxis=dict(tickformat='%Y年%m月', rangeslider=dict(visible=False), type='date', dtick='M1'),
                               yaxis=dict(tickformat=',', tickprefix='￥'))
 
         # 円グラフ作成
