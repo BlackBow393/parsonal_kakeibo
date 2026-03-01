@@ -229,72 +229,153 @@ def register_callbacks(dash_app):
         fig_pie_in_sub = make_pie(df_filtered[df_filtered['収入/支出']=='収入'], '収入の小分類割合')
         
         # --- 📊 年別・年収棒グラフ ---
-        # 分類が「給与」のデータだけ抽出
-        df_bar_income = combined_df[combined_df['分類'] == '💰 給料']
-        df_bar_income = df_bar_income.groupby(['年', '分類'], as_index=False)['金額'].sum()
-        
-        # 回帰直線を計算（線形近似）
-        # 年を数値型に変換（polyfitは数値でないと動かない）
-        x = df_bar_income['年'].astype(int)
-        y = df_bar_income['金額']
-        
-        # 1次式で近似（y = a*x + b）
-        a, b = np.polyfit(x, y, 1)
-        
-        # --- 🔹 来年を外挿して追加 ---
-        next_year = x.max() + 1
-        y_next = a * next_year + b  # 来年の予測値
-        
-        y_fit = a * x + b
-        
-        # 元データ + 来年の予測点をプロット用にまとめる
-        x_extended = np.append(x, next_year)
-        y_fit_extended = np.append(y_fit, y_next)
+        def update_bar_income(selected_year):
+            # 年フィルターの選択によって分岐
+            if selected_year == 'all':
+                # 分類が「給与」のデータだけ抽出
+                df_bar_income = combined_df[combined_df['分類'] == '💰 給料']
+                df_bar_income = df_bar_income.groupby(['年', '分類'], as_index=False)['金額'].sum()
+            
+                # 回帰直線を計算（線形近似）
+                # 年を数値型に変換（polyfitは数値でないと動かない）
+                x = df_bar_income['年'].astype(int)
+                y = df_bar_income['金額']
+            
+                # 1次式で近似（y = a*x + b）
+                a, b = np.polyfit(x, y, 1)
+                
+                # --- 🔹 来年を外挿して追加 ---
+                next_year = x.max() + 1
+                y_next = a * next_year + b  # 来年の予測値
+                
+                y_fit = a * x + b
+            
+                # 元データ + 来年の予測点をプロット用にまとめる
+                x_extended = np.append(x, next_year)
+                y_fit_extended = np.append(y_fit, y_next)
 
-        fig_bar_income = px.bar(
-            df_bar_income,
-            x='年',
-            y='金額',
-            color='分類',
-            title="手取り推移",
-            labels={'金額': '金額（円）', '年': '年'},
-            color_discrete_map={'💰 給料': 'cornflowerblue'} 
-        )
+                fig_bar_income = px.bar(
+                    df_bar_income,
+                    x='年',
+                    y='金額',
+                    color='分類',
+                    title="手取り推移",
+                    labels={'金額': '金額（円）', '年': '年'},
+                    color_discrete_map={'💰 給料': 'cornflowerblue'} 
+                )
+            
+                # 回帰直線を追加
+                fig_bar_income.add_trace(
+                    go.Scatter(
+                        x=x_extended,
+                        y=y_fit_extended,
+                        mode='lines',
+                        name='年収予測線',
+                        line=dict(color='red', width=2, dash='dash')
+                    )
+                )
+            
+                # 来年の予測点を強調表示（オプション）
+                fig_bar_income.add_trace(
+                    go.Scatter(
+                        x=[next_year],
+                        y=[y_next],
+                        mode='markers+text',
+                        name='来年予測',
+                        text=[f"{int(next_year)}年\n予測: {y_next:,.0f}円"],
+                        textposition='top center',
+                        marker=dict(color='red', size=10, symbol='diamond')
+                    )
+                )
+                
+                fig_bar_income.update_layout(
+                    barmode='stack', 
+                    yaxis=dict(tickformat=',', tickprefix='￥'),
+                    yaxis_title="金額（円）",
+                    xaxis=dict(
+                        tickmode='array',              # 目盛りを手動指定
+                        tickvals=sorted(list(x) + [next_year]),  # 年（整数）のみを表示
+                        ticktext=[str(y) for y in sorted(list(x) + [next_year])]  # 表示文字列
+                    )
+                )
+            else:
+                # 分類が「給与」のデータだけ抽出
+                df_bar_income = df_filtered[df_filtered['分類'] == '💰 給料']
+                df_bar_income = df_bar_income.groupby(['期間', '分類'], as_index=False)['金額'].sum()
+                
+                # 日付型に統一
+                df_bar_income['期間'] = pd.to_datetime(df_bar_income['期間'])
+                df_bar_income = df_bar_income.sort_values('期間')
+                
+                # --- 🔵 累計値を作る ---
+                df_bar_income['累計'] = df_bar_income['金額'].cumsum()
+                
+                # 回帰直線を計算（線形近似）
+                # 年を数値型に変換（polyfitは数値でないと動かない）
+                x_numeric = np.arange(len(df_bar_income))
+                y_cum = df_bar_income['累計']
+            
+                # 1次式で近似（y = a*x + b）
+                a, b = np.polyfit(x_numeric, y_cum, 1)
+                y_fit = a * x_numeric + b
+                
+                # --- 🔴 12月の予測 ---
+                months_so_far = len(df_bar_income)
+                december_index = 11  # 0始まりなので12月は11
+
+                y_december_pred = a * december_index + b
+                
+                fig_bar_income = px.bar(
+                    df_bar_income,
+                    x='期間',
+                    y='金額',
+                    color='分類',
+                    title="手取り推移",
+                    labels={'金額': '金額（円）', '期間': '年月'},
+                    color_discrete_map={'💰 給料': 'cornflowerblue'} 
+                )
+            
+                # 回帰直線を追加
+                fig_bar_income.add_trace(
+                    go.Scatter(
+                        x=df_bar_income['期間'],
+                        y=y_fit,
+                        mode='lines',
+                        name='年内累計予測',
+                        line=dict(color='red', width=2, dash='dash')
+                    )
+                )
+
+                # --- 12月予測点 ---
+                december_date = pd.Timestamp(
+                    year=df_bar_income['期間'].dt.year.iloc[0],
+                    month=12,
+                    day=1
+                )
+                
+                fig_bar_income.add_trace(
+                    go.Scatter(
+                        x=[december_date],
+                        y=[y_december_pred],
+                        mode='markers+text',
+                        name='12月累計予測',
+                        text=[f"12月予測\n{y_december_pred:,.0f}円"],
+                        textposition='top center',
+                        marker=dict(color='red', size=10, symbol='diamond')
+                    )
+                )
+                
+                fig_bar_income.update_layout(
+                    barmode='stack', 
+                    yaxis=dict(tickformat=',', tickprefix='￥'),
+                    yaxis_title="金額（円）",
+                    xaxis=dict(
+                        tickformat='%Y年%m月'
+                    )
+                )
+            return fig_bar_income
+        fig_bar_income = update_bar_income(selected_year)
         
-        # 回帰直線を追加
-        fig_bar_income.add_trace(
-            go.Scatter(
-                x=x_extended,
-                y=y_fit_extended,
-                mode='lines',
-                name='年収予測線',
-                line=dict(color='red', width=2, dash='dash')
-            )
-        )
-        
-        # 来年の予測点を強調表示（オプション）
-        fig_bar_income.add_trace(
-            go.Scatter(
-                x=[next_year],
-                y=[y_next],
-                mode='markers+text',
-                name='来年予測',
-                text=[f"{int(next_year)}年\n予測: {y_next:,.0f}円"],
-                textposition='top center',
-                marker=dict(color='red', size=10, symbol='diamond')
-            )
-        )
-        
-        fig_bar_income.update_layout(
-            barmode='stack', 
-            yaxis=dict(tickformat=',', tickprefix='￥'),
-            yaxis_title="金額（円）",
-            xaxis=dict(
-                tickmode='array',              # 目盛りを手動指定
-                tickvals=sorted(list(x) + [next_year]),  # 年（整数）のみを表示
-                ticktext=[str(y) for y in sorted(list(x) + [next_year])]  # 表示文字列
-            )
-        )
         
         return (year_options, selected_year,
                 income_options, selected_income_category,
