@@ -142,8 +142,11 @@ def register_callbacks(dash_app):
         monthly = (
             df_filtered.groupby('期間', as_index=False)['金額']
             .sum()
-            .sort_values('期間')
         )
+        
+        # 期間を日付データに変換して軸の文字化け対策
+        monthly['期間'] = pd.to_datetime(monthly['期間'])
+        monthly = monthly.sort_values('期間')
 
         # タイトルを条件で切り替える
         if selected_year == 'all':
@@ -163,6 +166,7 @@ def register_callbacks(dash_app):
         fig_line.update_layout(
             xaxis=dict(
                 tickformat='%Y年%m月',  # ← 日本語形式
+                dtick='M1',
                 rangeslider=dict(visible=False)
             ),
             yaxis=dict(
