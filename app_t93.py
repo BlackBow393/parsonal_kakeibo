@@ -36,7 +36,8 @@ def save_config(config):
 
 @app.route('/')
 def home():
-    return render_template('main.html')
+    #return render_template('main.html') #iframe利用時
+    return redirect('/dash/')   #iframe非利用時
 
 @app.route('/asset')
 def asset():

@@ -21,6 +21,10 @@ header h2 {
     font-size: 24px;
 }
 
+.headder-main {
+    background-color: steelblue;
+}
+
 .headder-asset {
     background-color: #64bb7e;
 }
