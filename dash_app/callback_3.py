@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-from dash import Input, Output, State, no_update
+from dash import Input, Output, State
 import os, json, requests
 
 CONFIG_FILE = "config.json"
@@ -30,10 +30,25 @@ def register_callbacks(dash_app):
         Input('month-dropdown', 'value'),
         Input('income-category-dropdown', 'value'),
         Input('income-subcategory-dropdown', 'value'),
+        Input('refresh-btn', 'n_clicks'),  # 🔴ここ追加
         prevent_initial_call=True
     )
-    def update_graph(selected_year, selected_month, selected_income_category, selected_income_subcategory):
+    def update_graph(selected_year, selected_month, selected_income_category, selected_income_subcategory, n_clicks):
         # --- 最新の設定を取得 ---
+        from dash import callback_context
+        
+        ctx = callback_context
+
+        if ctx.triggered:
+            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+            if trigger_id == "refresh-btn":
+                try:
+                    # 🔴 Flaskの更新処理を呼ぶ
+                    requests.post("http://localhost:5050/refresh")
+                except:
+                    print("refresh失敗")
+        
         config = load_config()
         DATA_DIR = config.get("folder_path")
 

@@ -44,7 +44,7 @@ def register_callbacks(dash_app):
             if trigger_id == "refresh-btn":
                 try:
                     # 🔴 Flaskの更新処理を呼ぶ
-                    requests.post("http://localhost:5000/refresh")
+                    requests.post("http://localhost:5050/refresh")
                 except:
                     print("refresh失敗")
         
