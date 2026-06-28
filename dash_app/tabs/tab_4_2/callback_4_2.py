@@ -30,20 +30,6 @@ def register_callbacks_4_2(dash_app):
         Input('refresh-btn', 'n_clicks')  # 🔴ここ追加
     )
     def update_graph(selected_year, selected_month, selected_expense_category, selected_expense_subcategory, n_clicks):
-        # --- 最新の設定を取得 ---
-        from dash import callback_context
-        
-        ctx = callback_context
-
-        if ctx.triggered:
-            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
-            if trigger_id == "refresh-btn":
-                try:
-                    # 🔴 Flaskの更新処理を呼ぶ
-                    requests.post("http://localhost:5050/refresh")
-                except:
-                    print("refresh失敗")
         
         config = load_config()
         DATA_DIR = config.get("folder_path")
