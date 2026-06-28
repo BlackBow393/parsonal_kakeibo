@@ -1,1 +1,5 @@
 data/
+graph_token_cache.bin
+*.token
+token_cache*
+config.json

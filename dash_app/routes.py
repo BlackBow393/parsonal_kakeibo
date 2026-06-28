@@ -1,195 +1,202 @@
 from flask import Blueprint, jsonify
-import os
-import time
-import win32com.client
-import pythoncom
+import base64
 import json
+import os
+import re
+import requests
+import msal
 
 routes_bp = Blueprint("routes", __name__)
 
 CONFIG_FILE = "config.json"
+TOKEN_CACHE_FILE = "graph_token_cache.bin"
+GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 
-# =========================
-# 設定ファイル読み込み
-# =========================
+
 def load_config():
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return {}
 
-# =========================
-# メール更新
-# =========================
+
+def sanitize_filename(name):
+    return re.sub(r'[<>:"/\\|?*]', "_", name)
+
+
+def load_cache():
+    cache = msal.SerializableTokenCache()
+
+    if os.path.exists(TOKEN_CACHE_FILE):
+        with open(TOKEN_CACHE_FILE, "r", encoding="utf-8") as f:
+            cache.deserialize(f.read())
+
+    return cache
+
+
+def save_cache(cache):
+    if cache.has_state_changed:
+        with open(TOKEN_CACHE_FILE, "w", encoding="utf-8") as f:
+            f.write(cache.serialize())
+
+
+def get_access_token(config):
+    client_id = config["graph_client_id"]
+    authority = config.get(
+        "graph_authority",
+        "https://login.microsoftonline.com/consumers",
+    )
+    scopes = config.get(
+        "graph_scopes",
+        ["User.Read", "Mail.ReadWrite"],
+    )
+
+    cache = load_cache()
+
+    app = msal.PublicClientApplication(
+        client_id=client_id,
+        authority=authority,
+        token_cache=cache,
+    )
+
+    accounts = app.get_accounts()
+    result = None
+
+    if accounts:
+        result = app.acquire_token_silent(scopes, account=accounts[0])
+
+    if not result:
+        flow = app.initiate_device_flow(scopes=scopes)
+
+        if "user_code" not in flow:
+            raise RuntimeError(f"Device code flow開始に失敗しました: {flow}")
+
+        print(flow["message"])
+        result = app.acquire_token_by_device_flow(flow)
+
+    save_cache(cache)
+
+    if "access_token" not in result:
+        raise RuntimeError(f"アクセストークン取得失敗: {result}")
+
+    return result["access_token"]
+
+
+def graph_get(url, token, params=None):
+    response = requests.get(
+        url,
+        headers={"Authorization": f"Bearer {token}"},
+        params=params,
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def graph_patch(url, token, payload):
+    response = requests.patch(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=30,
+    )
+    response.raise_for_status()
+
+
+def save_attachments(message_id, token, folder_path):
+    attachments_url = f"{GRAPH_BASE}/me/messages/{message_id}/attachments"
+    data = graph_get(attachments_url, token)
+
+    saved_files = []
+
+    for attachment in data.get("value", []):
+        if attachment.get("@odata.type") != "#microsoft.graph.fileAttachment":
+            continue
+
+        filename = sanitize_filename(attachment.get("name", "attachment.bin"))
+        content_bytes = attachment.get("contentBytes")
+
+        if not content_bytes:
+            continue
+
+        save_path = os.path.join(folder_path, filename)
+
+        with open(save_path, "wb") as f:
+            f.write(base64.b64decode(content_bytes))
+
+        saved_files.append(save_path)
+
+    return saved_files
+
+
 @routes_bp.route("/refresh", methods=["POST"])
 def update_mail():
-
     try:
         print("===== refresh開始 =====")
-
+        
         config = load_config()
-        SAVE_DIR = config.get("folder_path")
 
-        if not SAVE_DIR:
+        folder_path = config.get("folder_path")
+        subject_keyword = config.get("subject_keyword", "家計簿")
+
+        if not folder_path:
             return jsonify({
                 "status": "error",
-                "message": "保存先が設定されていません。"
+                "message": "保存先フォルダが設定されていません。",
             })
 
-        os.makedirs(SAVE_DIR, exist_ok=True)
+        os.makedirs(folder_path, exist_ok=True)
+
+        token = get_access_token(config)
+
+        messages_url = f"{GRAPH_BASE}/me/mailFolders/inbox/messages"
+
+        params = {
+            "$filter": "isRead eq false",
+            "$select": "id,subject,receivedDateTime,hasAttachments,isRead",
+            "$orderby": "receivedDateTime desc",
+            "$top": "25",
+        }
+
+        data = graph_get(messages_url, token, params=params)
+        messages = data.get("value", [])
 
         saved_files = []
 
-        pythoncom.CoInitialize()
+        for msg in messages:
+            subject = msg.get("subject") or ""
+            message_id = msg["id"]
 
-        try:
-            print("Outlook接続開始")
+            print(f"メール確認: {subject}")
 
-            outlook = win32com.client.Dispatch(
-                "Outlook.Application"
-            ).GetNamespace("MAPI")
+            if subject_keyword and subject_keyword not in subject:
+                continue
 
-            print("受信トレイ取得")
+            if msg.get("hasAttachments"):
+                saved = save_attachments(message_id, token, folder_path)
+                saved_files.extend(saved)
 
-            inbox = outlook.GetDefaultFolder(6)
-
-            messages = None
-
-            # =========================
-            # 未読メール取得（最大3回）
-            # =========================
-            for attempt in range(3):
-
-                print(f"未読検索 {attempt+1}回目")
-
-                messages = inbox.Items.Restrict(
-                    "[Unread] = true"
-                )
-
-                messages.Sort(
-                    "[ReceivedTime]",
-                    True
-                )
-
-                print(
-                    f"未読件数: {messages.Count}"
-                )
-
-                if messages.Count > 0:
-                    break
-
-                time.sleep(2)
-
-            # =========================
-            # メール処理
-            # =========================
-            if messages and messages.Count > 0:
-
-                for i in range(
-                    messages.Count,
-                    0,
-                    -1
-                ):
-
-                    try:
-
-                        msg = messages.Item(i)
-
-                        subject = msg.Subject or ""
-
-                        print(
-                            f"メール処理: {subject}"
-                        )
-
-                        if "家計簿" not in subject:
-                            continue
-
-                        _ = msg.Body
-
-                        attachment_count = msg.Attachments.Count
-
-                        print(
-                            f"添付数: {attachment_count}"
-                        )
-
-                        for j in range(
-                            1,
-                            attachment_count + 1
-                        ):
-
-                            att = msg.Attachments.Item(j)
-
-                            save_path = os.path.join(
-                                SAVE_DIR,
-                                att.FileName
-                            )
-
-                            print(
-                                f"保存開始: {save_path}"
-                            )
-
-                            for retry in range(3):
-
-                                try:
-
-                                    att.SaveAsFile(
-                                        save_path
-                                    )
-
-                                    saved_files.append(
-                                        save_path
-                                    )
-
-                                    print(
-                                        f"保存成功: {save_path}"
-                                    )
-
-                                    break
-
-                                except Exception as save_err:
-
-                                    print(
-                                        f"保存失敗({retry+1}/3): {save_err}"
-                                    )
-
-                                    if retry < 2:
-                                        time.sleep(5)
-                                    else:
-                                        saved_files.append(
-                                            f"ERROR: {att.FileName} - {save_err}"
-                                        )
-
-                        msg.UnRead = False
-                        msg.Save()
-
-                    except Exception as mail_err:
-
-                        error_msg = (
-                            f"メール処理失敗: {mail_err}"
-                        )
-
-                        print(error_msg)
-
-                        saved_files.append(error_msg)
-
-        finally:
-
-            pythoncom.CoUninitialize()
-
-            print("Outlook終了")
+            graph_patch(
+                f"{GRAPH_BASE}/me/messages/{message_id}",
+                token,
+                {"isRead": True},
+            )
 
         print("===== refresh終了 =====")
 
         return jsonify({
             "status": "success",
-            "files": saved_files
+            "files": saved_files,
+            "count": len(saved_files),
         })
 
     except Exception as e:
-
         print("致命的エラー:", str(e))
 
         return jsonify({
             "status": "error",
-            "message": str(e)
+            "message": str(e),
         })

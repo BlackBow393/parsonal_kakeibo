@@ -1,3 +1,9 @@
 {
-    "folder_path": "C:/Users/t9374/OneDrive/デスクトップ/家計簿保存先"
+    "folder_path": "C:/Users/t9374/OneDrive/デスクトップ/家計簿保存先",
+    "graph_client_id": "e179a68c-a88c-42b2-a3c3-5aafcce8d4e0",
+    "graph_authority": "https://login.microsoftonline.com/consumers",
+    "graph_scopes": [
+        "User.Read",
+        "Mail.ReadWrite"
+    ]
 }
